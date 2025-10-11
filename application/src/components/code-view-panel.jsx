@@ -1,5 +1,5 @@
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card"
-import { ScrollArea } from "./ui/scroll-area"
+import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
+import { ScrollArea } from "./ui/scroll-area";
 
 const codeExamples = {
   "Bubble Sort": `function bubbleSort(arr) {
@@ -19,23 +19,23 @@ const codeExamples = {
   const right = arr.filter(x => x > pivot);
   return [...quickSort(left), pivot, ...quickSort(right)];
 }`,
-}
+};
 
 export default function CodeViewPanel({ algorithm }) {
-  const code = codeExamples[algorithm] || "// Select an algorithm to view code"
+  const code = codeExamples[algorithm] || "// Select an algorithm to view code";
 
   return (
-    <Card className="flex-1 flex flex-col">
+    <Card className="flex-1 flex flex-col card">
       <CardHeader>
         <CardTitle className="text-base">Pseudocode</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+        <ScrollArea className="scroll-area">
           <pre className="text-sm font-mono text-muted-foreground">
             <code>{code}</code>
           </pre>
         </ScrollArea>
       </CardContent>
     </Card>
-  )
+  );
 }
