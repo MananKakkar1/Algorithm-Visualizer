@@ -67,39 +67,57 @@ export default function VisualizationArea({
   stepTick = 0,
   resetTick = 0,
 }) {
+  // sourceArray is the immutable input snapshot used to generate steps
+  const [sourceArray, setSourceArray] = useState([]);
+  // visual array is the one we mutate and display while stepping
   const [array, setArray] = useState([]);
   const [active, setActive] = useState([]); // indices being compared/highlighted
   const [stepIndex, setStepIndex] = useState(0);
 
   // initial array (only on reset)
   useEffect(() => {
-    const newArray = Array.from({ length: 20 }, () =>
-      Math.floor(Math.random() * 100) + 10
+    const newArray = Array.from(
+      { length: 20 },
+      () => Math.floor(Math.random() * 100) + 10
     );
-    setArray(newArray);
+    setSourceArray(newArray);
+    setArray(newArray.slice());
     setStepIndex(0);
     setActive([]);
   }, [resetTick]);
 
-  // when algorithm changes, reset the step index and active highlights but keep the same array
+  // when algorithm changes, reset the step index and active highlights and reset visual array to source
   useEffect(() => {
     setStepIndex(0);
     setActive([]);
-  }, [algorithm]);
+    setArray(sourceArray.slice());
+  }, [algorithm, sourceArray]);
 
   // steps are memoized for current array snapshot and selected algorithm
   const steps = useMemo(() => {
     if ((algorithm || "").toLowerCase().includes("quick")) {
-      return generateQuickSteps(array);
+      return generateQuickSteps(sourceArray);
     }
     // default to bubble sort
-    return generateBubbleSteps(array);
-  }, [array, algorithm]);
+    return generateBubbleSteps(sourceArray);
+  }, [sourceArray, algorithm]);
+
+  // keep refs to steps and stepIndex so playback doesn't re-generate steps mid-run
+  const stepsRef = useRef(steps);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
+
+  const stepIndexRef = useRef(stepIndex);
+  useEffect(() => {
+    stepIndexRef.current = stepIndex;
+  }, [stepIndex]);
 
   // advance a single step (play or manual step)
   const doStep = () => {
-    if (stepIndex >= steps.length) return;
-    const s = steps[stepIndex];
+    const currentIndex = stepIndexRef.current;
+    const s = stepsRef.current[currentIndex];
+    if (!s) return; // finished
     if (s.compare) {
       setActive([s.i, s.j]);
     } else if (s.swapped) {
@@ -132,13 +150,15 @@ export default function VisualizationArea({
       doStep();
     }, intervalMs);
     return () => clearInterval(id);
-  }, [isPlaying, speed, stepIndex, steps.length]);
+  }, [isPlaying, speed]);
 
   return (
     <Card className="flex-1 p-6 card">
       <div className="mb-4">
         <h2 className="text-lg font-semibold">{algorithm}</h2>
-        <p className="text-sm text-muted-foreground">Visualizing algorithm execution</p>
+        <p className="text-sm text-muted-foreground">
+          Visualizing algorithm execution
+        </p>
       </div>
 
       <div className="visualization-bars">
@@ -148,7 +168,9 @@ export default function VisualizationArea({
             className="visual-bar"
             style={{
               height: `${value}%`,
-              backgroundColor: active.includes(idx) ? "var(--destructive)" : "var(--primary)",
+              backgroundColor: active.includes(idx)
+                ? "var(--destructive)"
+                : "var(--primary)",
             }}
           />
         ))}
