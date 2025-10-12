@@ -49,6 +49,7 @@ export default function App() {
               height: "calc(100vh - 60px)", // below navbar
               overflowY: "auto",
               scrollbarWidth: "none",
+              flexShrink: 0,
             }}
           >
             <Sidebar
@@ -61,14 +62,14 @@ export default function App() {
           {/* Main Content */}
           <main className="flex flex-1 flex-col overflow-hidden">
             <div className="flex flex-1 gap-4 p-4 overflow-hidden">
-              {/* Visualization + Control Panel */}
-              <div className="flex flex-col flex-1 gap-4 min-w-0 ">
+              {/* Left main column (full width next to sidebar) */}
+              <div className="flex flex-col flex-1 gap-4 min-w-0">
                 {/* Visualization Area — increased height */}
                 <div
                   className="card p-4"
                   style={{
                     flex: "0 0 auto",
-                    height: "420px", // ⬅️ increased height
+                    height: "420px", // visualization height
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
@@ -97,17 +98,49 @@ export default function App() {
                     onSpeedChange={setSpeed}
                   />
                 </div>
+
+                {/* NEW: Two-panels row under control panel (50% / 50%) */}
+                <div
+                  className="cardless-row"
+                  style={{
+                    display: "flex",
+                    gap: "16px",
+                    width: "100%",
+                    alignItems: "stretch",
+                    minWidth: 0,
+                  }}
+                >
+                  {/* Pseudocode / Code View */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      border: "1px solid #1c2333",
+                      borderRadius: "10px",
+                      backgroundColor: "#0b1220",
+                      display: "flex",
+                    }}
+                  >
+                    <CodeViewPanel algorithm={selectedAlgorithm} />
+                  </div>
+
+                  {/* Code Editor */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      border: "1px solid #1c2333",
+                      borderRadius: "10px",
+                      backgroundColor: "#0b1220",
+                      display: "flex",
+                    }}
+                  >
+                    <CodeEditorPanel algorithm={selectedAlgorithm} />
+                  </div>
+                </div>
               </div>
 
-              {/* Code Panels */}
-              <div className="flex flex-col gap-4 w-96 min-w-[24rem]">
-                <div className="card shadow flex-1">
-                  <CodeViewPanel algorithm={selectedAlgorithm} />
-                </div>
-                <div className="card shadow flex-1">
-                  <CodeEditorPanel algorithm={selectedAlgorithm} />
-                </div>
-              </div>
+              {/* (Removed previous right-side column) */}
             </div>
           </main>
         </div>

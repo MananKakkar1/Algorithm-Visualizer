@@ -10,7 +10,7 @@ export default function Navbar({ theme, toggleTheme }) {
       style={{
         backgroundColor: "#0b1220",
         borderBottom: "1px solid #1c2333",
-        padding: "12px 6vw", // ⬅️ balanced left & right spacing (6% of viewport)
+        padding: "12px 6vw",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
@@ -18,51 +18,35 @@ export default function Navbar({ theme, toggleTheme }) {
         position: "sticky",
         top: 0,
         zIndex: 50,
+        height: "60px",
       }}
     >
-      {/* Left side: logo + title */}
+      {/* Left side placeholder (kept for structure, invisible) */}
+      <div style={{ width: "38px", visibility: "hidden" }}></div>
+
+      {/* Center title */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "14px",
-          flexShrink: 0,
+          position: "absolute",
+          left: "50%",
+          transform: "translateX(-50%)",
+          textAlign: "center",
+          whiteSpace: "nowrap",
         }}
       >
-        {/* <div
-          className="navbar logo"
-          aria-hidden
-          style={{
-            backgroundColor: "#1a1f3b",
-            border: "1px solid #3b2a6f",
-            color: "#b39aff",
-            borderRadius: "8px",
-            width: "38px",
-            height: "38px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: "bold",
-            fontSize: "17px",
-            flexShrink: 0,
-          }}
-        >
-          A
-        </div> */}
         <h1
           style={{
             fontSize: "21px",
             fontWeight: "600",
             color: "#e0e0ff",
             letterSpacing: "0.4px",
-            whiteSpace: "nowrap",
           }}
         >
           Algorithm Visualizer
         </h1>
       </div>
 
-      {/* Right side: icons */}
+      {/* Right side: icons (still hidden per your comment instructions) */}
       <div
         style={{
           display: "flex",
