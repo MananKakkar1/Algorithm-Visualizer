@@ -20,7 +20,6 @@ export default function App() {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
   };
 
-  // Sync theme globally
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -35,8 +34,8 @@ export default function App() {
         {/* Navbar */}
         <Navbar theme={theme} toggleTheme={toggleTheme} />
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar — always visible, sticky */}
+        <div className="flex flex-1">
+          {/* Sticky Scrollable Sidebar with Custom Scrollbar */}
           <div
             className="sidebar"
             style={{
@@ -45,31 +44,52 @@ export default function App() {
               borderRight: "1px solid #1c2333",
               color: "#e0e0ff",
               position: "sticky",
-              top: "0",
-              height: "calc(100vh - 60px)", // below navbar
+              top: "60px", // sticks below navbar
+              alignSelf: "flex-start",
+              height: "calc(100vh - 60px)",
               overflowY: "auto",
-              scrollbarWidth: "none",
+              overflowX: "hidden",
+              paddingRight: "6px", // avoids scrollbar overlap
               flexShrink: 0,
+              zIndex: 10,
+              scrollbarWidth: "thin",
+              scrollbarColor: "#5a3fc0 #0b1220",
             }}
           >
+            <style jsx>{`
+              .sidebar::-webkit-scrollbar {
+                width: 8px;
+              }
+              .sidebar::-webkit-scrollbar-track {
+                background: #0b1220;
+              }
+              .sidebar::-webkit-scrollbar-thumb {
+                background-color: #5a3fc0;
+                border-radius: 6px;
+                border: 2px solid #0b1220;
+              }
+              .sidebar::-webkit-scrollbar-thumb:hover {
+                background-color: #7d61ff;
+              }
+            `}</style>
+
             <Sidebar
-              isOpen={true} // Always open
+              isOpen={true}
               selectedAlgorithm={selectedAlgorithm}
               onSelectAlgorithm={setSelectedAlgorithm}
             />
           </div>
 
           {/* Main Content */}
-          <main className="flex flex-1 flex-col overflow-hidden">
-            <div className="flex flex-1 gap-4 p-4 overflow-hidden">
-              {/* Left main column (full width next to sidebar) */}
+          <main className="flex flex-1 flex-col">
+            <div className="flex flex-1 gap-4 p-4">
               <div className="flex flex-col flex-1 gap-4 min-w-0">
-                {/* Visualization Area — increased height */}
+                {/* Visualization Area */}
                 <div
                   className="card p-4"
                   style={{
                     flex: "0 0 auto",
-                    height: "420px", // visualization height
+                    height: "420px",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "center",
@@ -99,7 +119,7 @@ export default function App() {
                   />
                 </div>
 
-                {/* NEW: Two-panels row under control panel (50% / 50%) */}
+                {/* Two-Panel Row (Code View + Editor) */}
                 <div
                   className="cardless-row"
                   style={{
@@ -139,8 +159,6 @@ export default function App() {
                   </div>
                 </div>
               </div>
-
-              {/* (Removed previous right-side column) */}
             </div>
           </main>
         </div>
