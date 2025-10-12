@@ -1,104 +1,157 @@
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
 
 const codeExamples = {
-  "Bubble Sort": `function bubbleSort(arr) {
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = 0; j < arr.length - i - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-      }
-    }
-  }
-  return arr;
-}`,
+  "Bubble Sort": `def bubble_sort(arr):
+    for i in range(len(arr)):
+        for j in range(0, len(arr) - i - 1):
+            if arr[j] > arr[j + 1]:
+                arr[j], arr[j + 1] = arr[j + 1], arr[j]
+    return arr`,
 
-  "Quick Sort": `function quickSort(arr) {
-  if (arr.length <= 1) return arr;
-  const pivot = arr[arr.length - 1];
-  const left = arr.filter((x, i) => x <= pivot && i < arr.length - 1);
-  const right = arr.filter(x => x > pivot);
-  return [...quickSort(left), pivot, ...quickSort(right)];
-}`,
+  "Quick Sort": `def quick_sort(arr):
+    if len(arr) <= 1:
+        return arr
+    pivot = arr[-1]
+    left = [x for x in arr[:-1] if x <= pivot]
+    right = [x for x in arr[:-1] if x > pivot]
+    return quick_sort(left) + [pivot] + quick_sort(right)`,
 
-  "Merge Sort": `function mergeSort(arr) {
-  if (arr.length <= 1) return arr;
+  "Merge Sort": `def merge_sort(arr):
+    if len(arr) <= 1:
+        return arr
 
-  const mid = Math.floor(arr.length / 2);
-  const left = mergeSort(arr.slice(0, mid));
-  const right = mergeSort(arr.slice(mid));
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid])
+    right = merge_sort(arr[mid:])
 
-  return merge(left, right);
-}
+    return merge(left, right)
 
-function merge(left, right) {
-  const result = [];
-  let i = 0, j = 0;
 
-  while (i < left.length && j < right.length) {
-    if (left[i] < right[j]) {
-      result.push(left[i]);
-      i++;
-    } else {
-      result.push(right[j]);
-      j++;
-    }
-  }
+def merge(left, right):
+    result = []
+    i = j = 0
 
-  return result.concat(left.slice(i)).concat(right.slice(j));
-}`,
+    while i < len(left) and j < len(right):
+        if left[i] < right[j]:
+            result.append(left[i])
+            i += 1
+        else:
+            result.append(right[j])
+            j += 1
 
-  "Heap Sort": `function heapSort(arr) {
-  const n = arr.length;
+    result.extend(left[i:])
+    result.extend(right[j:])
+    return result`,
 
-  function heapify(n, i) {
-    let largest = i;
-    const left = 2 * i + 1;
-    const right = 2 * i + 2;
+  "Heap Sort": `def heap_sort(arr):
+    n = len(arr)
 
-    if (left < n && arr[left] > arr[largest]) largest = left;
-    if (right < n && arr[right] > arr[largest]) largest = right;
+    def heapify(n, i):
+        largest = i
+        left = 2 * i + 1
+        right = 2 * i + 2
 
-    if (largest !== i) {
-      [arr[i], arr[largest]] = [arr[largest], arr[i]];
-      heapify(n, largest);
-    }
-  }
+        if left < n and arr[left] > arr[largest]:
+            largest = left
+        if right < n and arr[right] > arr[largest]:
+            largest = right
 
-  // Build max heap
-  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-    heapify(n, i);
-  }
+        if largest != i:
+            arr[i], arr[largest] = arr[largest], arr[i]
+            heapify(n, largest)
 
-  // Extract elements
-  for (let i = n - 1; i > 0; i--) {
-    [arr[0], arr[i]] = [arr[i], arr[0]];
-    heapify(i, 0);
-  }
+    for i in range(n // 2 - 1, -1, -1):
+        heapify(n, i)
 
-  return arr;
-}`
+    for i in range(n - 1, 0, -1):
+        arr[0], arr[i] = arr[i], arr[0]
+        heapify(i, 0)
+
+    return arr`,
+
+  "Array Traversal": `def traverse(arr):
+    for i in range(len(arr)):
+        print(arr[i])`,
+
+  "Array Rotation": `def rotate(arr, k):
+    k = k % len(arr)
+    return arr[k:] + arr[:k]`,
+
+  "Stack Operations": `def stack_operations():
+    stack = []
+
+    stack.append(5)   # push
+    stack.append(8)   # push
+    stack.pop()       # pop
+    stack.append(3)   # push
+
+    return stack`,
+
+  "Expression Evaluation": `def evaluate(expression):
+    stack = []
+
+    for token in expression:
+        if token.isdigit():
+            stack.append(int(token))
+        else:
+            b = stack.pop()
+            a = stack.pop()
+            if token == '+':
+                stack.append(a + b)
+            elif token == '-':
+                stack.append(a - b)
+            elif token == '*':
+                stack.append(a * b)
+            elif token == '/':
+                stack.append(a / b)
+
+    return stack[0]
+
+
+# Example:
+# evaluate(["2", "3", "+", "4", "*"]) -> 20`,
 };
 
 const algoInfo = {
   "Bubble Sort": {
     time: "O(n²)",
     space: "O(1)",
-    desc: "A simple comparison-based sorting algorithm that repeatedly steps through the list, compares adjacent elements, and swaps them if they are out of order.",
+    desc: "A simple comparison-based sorting algorithm that repeatedly compares adjacent elements and swaps them if they are out of order.",
   },
   "Quick Sort": {
     time: "O(n log n) average, O(n²) worst",
     space: "O(log n)",
-    desc: "A divide-and-conquer algorithm that selects a pivot element, partitions the array, and recursively sorts the partitions.",
+    desc: "A divide-and-conquer sorting algorithm that partitions elements around a pivot, recursively sorting each partition.",
   },
   "Merge Sort": {
     time: "O(n log n)",
     space: "O(n)",
-    desc: "A divide-and-conquer algorithm that divides the array into halves, recursively sorts them, and merges the sorted halves back together.",
+    desc: "Divides the array into halves, recursively sorts them, and merges the sorted halves into a final sorted array.",
   },
   "Heap Sort": {
     time: "O(n log n)",
     space: "O(1)",
-    desc: "A comparison-based algorithm that builds a max heap, then repeatedly extracts the largest element and rebuilds the heap to sort the array in place.",
+    desc: "Transforms the array into a max heap, then repeatedly extracts the largest element to sort the array in-place.",
+  },
+  "Array Traversal": {
+    time: "O(n)",
+    space: "O(1)",
+    desc: "Sequentially visits each element of the array for processing or display.",
+  },
+  "Array Rotation": {
+    time: "O(n)",
+    space: "O(1)",
+    desc: "Rotates array elements left or right by k positions, preserving relative order.",
+  },
+  "Stack Operations": {
+    time: "O(1) for push/pop",
+    space: "O(n)",
+    desc: "Demonstrates stack operations using push and pop, where elements follow LIFO (Last-In, First-Out) order.",
+  },
+  "Expression Evaluation": {
+    time: "O(n)",
+    space: "O(n)",
+    desc: "Evaluates a postfix expression using a stack by pushing operands and applying operators as they appear.",
   },
 };
 
@@ -137,7 +190,7 @@ export default function CodeViewPanel({ algorithm }) {
         </CardTitle>
       </CardHeader>
 
-      {/* --- PSEUDOCODE AREA (wrap to fit width) --- */}
+      {/* --- PSEUDOCODE AREA --- */}
       <CardContent
         style={{
           flex: "0 0 auto",
@@ -152,13 +205,11 @@ export default function CodeViewPanel({ algorithm }) {
             borderRadius: "8px",
             padding: "10px 12px",
             width: "100%",
-
             fontFamily:
               "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
             fontSize: "13px",
             color: "#c7c8f9",
             lineHeight: 1.5,
-
             whiteSpace: "pre-wrap",
             overflowWrap: "anywhere",
             wordBreak: "break-word",

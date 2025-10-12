@@ -5,13 +5,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 /* ================================
    STEP GENERATORS
-   - Bubble: compare/swap
-   - Quick:  compare/swap
-   - Merge:  compare/set
-   Each step uses one of:
-   { op: "compare", a, b }
-   { op: "swap", i, j }
-   { op: "set", index, value }
 ==================================*/
 
 // Bubble Sort
@@ -44,7 +37,7 @@ function generateQuickSteps(arr) {
     const pivot = a[r];
     let i = l;
     for (let j = l; j < r; j++) {
-      steps.push({ op: "compare", a: j, b: r }); // compare with pivot
+      steps.push({ op: "compare", a: j, b: r });
       if (a[j] < pivot) {
         if (i !== j) {
           swap(i, j);
@@ -71,7 +64,7 @@ function generateQuickSteps(arr) {
   return steps;
 }
 
-// Merge Sort (uses "set" operations)
+// Merge Sort
 function generateMergeSteps(arr) {
   const a = arr.slice();
   const steps = [];
@@ -87,14 +80,10 @@ function generateMergeSteps(arr) {
   function merge(start, mid, end) {
     const left = a.slice(start, mid);
     const right = a.slice(mid, end);
-    let i = 0,
-      j = 0,
-      k = start;
+    let i = 0, j = 0, k = start;
 
     while (i < left.length && j < right.length) {
-      // visualize comparison of heads
       steps.push({ op: "compare", a: start + i, b: mid + j });
-
       if (left[i] <= right[j]) {
         a[k] = left[i];
         steps.push({ op: "set", index: k, value: left[i] });
@@ -110,15 +99,12 @@ function generateMergeSteps(arr) {
     while (i < left.length) {
       a[k] = left[i];
       steps.push({ op: "set", index: k, value: left[i] });
-      i++;
-      k++;
+      i++; k++;
     }
-
     while (j < right.length) {
       a[k] = right[j];
       steps.push({ op: "set", index: k, value: right[j] });
-      j++;
-      k++;
+      j++; k++;
     }
   }
 
@@ -126,7 +112,7 @@ function generateMergeSteps(arr) {
   return steps;
 }
 
-// Generate Heap Sort steps: returns array of { i, j, compare, swapped }
+// Heap Sort
 function generateHeapSteps(arr) {
   const a = arr.slice();
   const steps = [];
@@ -147,19 +133,14 @@ function generateHeapSteps(arr) {
     const left = 2 * i + 1;
     const right = 2 * i + 2;
 
-    // Compare left child
     if (left < n) {
       compare(left, largest);
       if (a[left] > a[largest]) largest = left;
     }
-
-    // Compare right child
     if (right < n) {
       compare(right, largest);
       if (a[right] > a[largest]) largest = right;
     }
-
-    // If largest is not root
     if (largest !== i) {
       swap(i, largest);
       heapify(n, largest);
@@ -167,17 +148,102 @@ function generateHeapSteps(arr) {
   };
 
   const n = a.length;
-
-  // Build max heap
-  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
-    heapify(n, i);
-  }
-
-  // Extract elements from heap
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) heapify(n, i);
   for (let i = n - 1; i > 0; i--) {
     swap(0, i);
     heapify(i, 0);
   }
+
+  return steps;
+}
+
+// Array Traversal / Rotation
+function generateArrayTraversalSteps(arr) {
+  const steps = [];
+  for (let i = 0; i < arr.length; i++) {
+    steps.push({ i, j: null, compare: true, swapped: false });
+  }
+  return steps;
+}
+
+function generateArrayRotationSteps(arr, k = 1) {
+  const steps = [];
+  const n = arr.length;
+  const a = arr.slice();
+  k = k % n;
+
+  for (let step = 0; step < k; step++) {
+    const first = a[0];
+    for (let i = 0; i < n - 1; i++) {
+      steps.push({ i, j: i + 1, compare: false, swapped: true });
+      a[i] = a[i + 1];
+    }
+    a[n - 1] = first;
+  }
+  return steps;
+}
+
+// Stack Operations
+function generateStackSteps() {
+  const steps = [];
+  const operations = [
+    { type: "push", value: 5 },
+    { type: "push", value: 8 },
+    { type: "pop" },
+    { type: "push", value: 3 },
+  ];
+
+  let stack = [];
+  for (const op of operations) {
+    if (op.type === "push") {
+      stack.push(op.value);
+      steps.push({ stack: [...stack], action: "push", value: op.value });
+    } else if (op.type === "pop" && stack.length > 0) {
+      stack.pop();
+      steps.push({ stack: [...stack], action: "pop" });
+    }
+  }
+  return steps;
+}
+
+// Expression Evaluation using Stack (Postfix evaluation simulation)
+function generateExpressionEvalSteps() {
+  const steps = [];
+  const expression = ["2", "3", "+", "4", "*"]; // Example: (2 + 3) * 4
+  let stack = [];
+
+  for (const token of expression) {
+    if (!isNaN(parseInt(token))) {
+      stack.push(Number(token));
+      steps.push({
+        stack: [...stack],
+        action: "push",
+        value: Number(token),
+      });
+    } else {
+      if (stack.length >= 2) {
+        const b = stack.pop();
+        const a = stack.pop();
+        let result;
+        if (token === "+") result = a + b;
+        else if (token === "-") result = a - b;
+        else if (token === "*") result = a * b;
+        else if (token === "/") result = a / b;
+
+        stack.push(result);
+        steps.push({
+          stack: [...stack],
+          action: "eval",
+          value: result,
+        });
+      }
+    }
+  }
+
+  steps.push({
+    stack: [...stack],
+    action: "done",
+  });
 
   return steps;
 }
@@ -195,78 +261,88 @@ export default function VisualizationArea({
 }) {
   const [sourceArray, setSourceArray] = useState([]);
   const [array, setArray] = useState([]);
-  const [active, setActive] = useState([]); // indices being highlighted
+  const [active, setActive] = useState([]);
+  const [stack, setStack] = useState([]);
+  const [highlightAction, setHighlightAction] = useState("");
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  // Generate a random array on reset
   useEffect(() => {
-    const newArray = Array.from(
-      { length: 20 },
-      () => Math.floor(Math.random() * 100) + 10
+    const newArray = Array.from({ length: 20 }, () =>
+      Math.floor(Math.random() * 100) + 10
     );
     setSourceArray(newArray);
     setArray(newArray.slice());
+    setStack([5]);
     setStepIndex(0);
     setActive([]);
+    setHighlightAction("");
   }, [resetTick]);
 
-  // Reset when algorithm changes
   useEffect(() => {
     setStepIndex(0);
     setActive([]);
     setArray(sourceArray.slice());
+    setStack([5]);
+    setHighlightAction("");
     setFinished(false);
   }, [algorithm, sourceArray]);
 
-  // Pick steps per algorithm
   const steps = useMemo(() => {
-    const name = (algorithm || "").toLowerCase();
-    if (name.includes("quick")) return generateQuickSteps(sourceArray);
-    if (name.includes("merge")) return generateMergeSteps(sourceArray);
-    if (name.includes("heap")) return generateHeapSteps(sourceArray);
-    return generateBubbleSteps(sourceArray);
+    const algo = (algorithm || "").toLowerCase();
+
+    if (algo.includes("quick")) return generateQuickSteps(sourceArray);
+    if (algo.includes("merge")) return generateMergeSteps(sourceArray);
+    if (algo.includes("heap")) return generateHeapSteps(sourceArray);
+    if (algo.includes("bubble")) return generateBubbleSteps(sourceArray);
+    if (algo.includes("rotation")) return generateArrayRotationSteps(sourceArray);
+    if (algo.includes("traversal")) return generateArrayTraversalSteps(sourceArray);
+    if (algo.includes("expression")) return generateExpressionEvalSteps();
+    if (algo.includes("stack")) return generateStackSteps();
+
+    return [];
   }, [sourceArray, algorithm]);
 
-  // Refs for stable playback
   const stepsRef = useRef(steps);
-  useEffect(() => {
-    stepsRef.current = steps;
-  }, [steps]);
+  useEffect(() => { stepsRef.current = steps; }, [steps]);
 
   const stepIndexRef = useRef(stepIndex);
-  useEffect(() => {
-    stepIndexRef.current = stepIndex;
-  }, [stepIndex]);
+  useEffect(() => { stepIndexRef.current = stepIndex; }, [stepIndex]);
 
-  // Execute one visualization step
   const doStep = () => {
-    const currentIndex = stepIndexRef.current;
-    const s = stepsRef.current[currentIndex];
+    const s = stepsRef.current[stepIndexRef.current];
     if (!s) return;
 
-    if (s.op === "compare" || s.compare) {
-      // support legacy shape
-      const ia = s.a ?? s.i;
-      const jb = s.b ?? s.j;
-      setActive([ia, jb].filter((v) => v !== undefined));
+    if (
+      algorithm.toLowerCase().includes("stack") ||
+      algorithm.toLowerCase().includes("expression")
+    ) {
+      setStack(s.stack || []);
+      setHighlightAction(
+        s.action === "push"
+          ? "push"
+          : s.action === "pop"
+          ? "pop"
+          : s.action === "eval"
+          ? "eval"
+          : ""
+      );
+    } else if (s.op === "compare" || s.compare) {
+      setActive([s.a ?? s.i, s.b ?? s.j].filter(Boolean));
     } else if (s.op === "swap" || s.swapped) {
-      const i = s.i,
-        j = s.j;
       setArray((prev) => {
         const copy = prev.slice();
-        [copy[i], copy[j]] = [copy[j], copy[i]];
+        [copy[s.i], copy[s.j]] = [copy[s.j], copy[s.i]];
         return copy;
       });
-      setActive([i, j]);
+      setActive([s.i, s.j]);
     } else if (s.op === "set" || "value" in s) {
-      const idx = s.index ?? s.i;
       setArray((prev) => {
         const copy = prev.slice();
-        copy[idx] = s.value;
+        copy[s.index ?? s.i] = s.value;
         return copy;
       });
-      setActive([idx]);
+      setActive([s.index ?? s.i]);
     }
 
     setStepIndex((idx) => {
@@ -279,7 +355,6 @@ export default function VisualizationArea({
     });
   };
 
-  // Manual step
   const lastStepTick = useRef(stepTick);
   useEffect(() => {
     if (stepTick !== lastStepTick.current) {
@@ -288,16 +363,15 @@ export default function VisualizationArea({
     }
   }, [stepTick]);
 
-  // Autoplay
   useEffect(() => {
     if (!isPlaying) return;
-    const intervalMs = Math.max(
-      50,
-      Math.round(2000 - (speed / 100) * (2000 - 50))
-    );
-    const id = setInterval(doStep, intervalMs);
-    return () => clearInterval(id);
+    const interval = setInterval(doStep, Math.max(50, Math.round(2000 - (speed / 100) * 1950)));
+    return () => clearInterval(interval);
   }, [isPlaying, speed]);
+
+  const isStack =
+    algorithm.toLowerCase().includes("stack") ||
+    algorithm.toLowerCase().includes("expression");
 
   return (
     <Card
@@ -318,35 +392,135 @@ export default function VisualizationArea({
         </p>
       </div>
 
-      {/* Compact visualization area */}
-      <div
-        className={"visualization-bars" + (finished ? " sorted" : "")}
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          height: "220px",
-          backgroundColor: "#111830",
-          borderRadius: "8px",
-          padding: "10px 6px",
-          overflow: "hidden",
-        }}
-      >
-        {array.map((value, idx) => (
+      {/* === STACK VISUALIZATION === */}
+      {isStack ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "260px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+            transition: "box-shadow 0.5s ease",
+          }}
+        >
+          {/* Tube container */}
           <div
-            key={idx}
-            className="visual-bar"
             style={{
-              flex: 1,
-              margin: "0 1px",
-              borderRadius: "3px 3px 0 0",
-              height: `${value * 1.75}px`,
-              backgroundColor: active.includes(idx) ? "#ff4d6d" : "#5a3fc0",
-              transition: "height 0.2s, background-color 0.2s",
+              position: "relative",
+              width: "140px",
+              height: "100%",
+              border: "3px solid #3b3f63",
+              borderRadius: "12px",
+              background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
+              boxShadow: finished
+                ? "0 0 15px rgba(179,154,255,0.6) inset"
+                : "inset 0 0 10px #1c2240",
+              display: "flex",
+              flexDirection: "column-reverse",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              overflow: "hidden",
+              transition: "box-shadow 0.5s ease",
             }}
-          />
-        ))}
-      </div>
+          >
+            {stack.map((val, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: "100px",
+                  height: "40px",
+                  marginBottom: "8px",
+                  backgroundColor: finished
+                    ? "#c5b3ff"
+                    : idx === stack.length - 1
+                    ? "#b39aff"
+                    : "#5a3fc0",
+                  border: "1px solid #b39aff",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  color: "white",
+                  transform: finished ? "translateY(-6px)" : "translateY(0)",
+                  boxShadow: finished
+                    ? "0 0 15px rgba(179,154,255,0.7)"
+                    : "0 2px 6px rgba(0,0,0,0.3)",
+                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
+                }}
+              >
+                {val}
+              </div>
+            ))}
+          </div>
+
+          {/* Instruction text */}
+          <div
+            style={{
+              marginLeft: "35px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              height: "100%",
+              gap: "10px",
+            }}
+          >
+            {["PUSH", "POP", "EVAL"].map((label) => (
+              <div
+                key={label}
+                style={{
+                  color:
+                    highlightAction === label.toLowerCase() ? "white" : "#666a80",
+                  fontWeight: highlightAction === label.toLowerCase() ? "600" : "400",
+                  fontSize: "15px",
+                  transition: "color 0.3s ease",
+                }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        // === DEFAULT BAR VISUALIZATION ===
+        <div
+          className={"visualization-bars" + (finished ? " sorted" : "")}
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            height: "220px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 6px",
+            overflow: "hidden",
+          }}
+        >
+          {array.map((value, idx) => (
+            <div
+              key={idx}
+              style={{
+                flex: 1,
+                margin: "0 1px",
+                borderRadius: "3px 3px 0 0",
+                height: `${value * 1.75}px`,
+                backgroundColor: active.includes(idx)
+                  ? "#ff4d6d"
+                  : finished
+                  ? "#b39aff"
+                  : "#5a3fc0",
+                transition: "height 0.2s, background-color 0.4s",
+              }}
+            />
+          ))}
+        </div>
+      )}
     </Card>
   );
 }
