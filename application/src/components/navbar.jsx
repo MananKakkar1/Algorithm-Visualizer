@@ -29,7 +29,7 @@ export default function Navbar({ theme, toggleTheme }) {
           flexShrink: 0,
         }}
       >
-        <div
+        {/* <div
           className="navbar logo"
           aria-hidden
           style={{
@@ -48,7 +48,7 @@ export default function Navbar({ theme, toggleTheme }) {
           }}
         >
           A
-        </div>
+        </div> */}
         <h1
           style={{
             fontSize: "21px",

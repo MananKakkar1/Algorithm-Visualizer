@@ -62,9 +62,18 @@ export default function App() {
           <main className="flex flex-1 flex-col overflow-hidden">
             <div className="flex flex-1 gap-4 p-4 overflow-hidden">
               {/* Visualization + Control Panel */}
-              <div className="flex flex-col flex-1 gap-4 min-w-0">
-                {/* Visualization Area (keeps same height as before) */}
-                <div className="flex-1 card p-4">
+              <div className="flex flex-col flex-1 gap-4 min-w-0 ">
+                {/* Visualization Area — increased height */}
+                <div
+                  className="card p-4"
+                  style={{
+                    flex: "0 0 auto",
+                    height: "420px", // ⬅️ increased height
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                  }}
+                >
                   <VisualizationArea
                     algorithm={selectedAlgorithm}
                     isPlaying={isPlaying}

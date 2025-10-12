@@ -18,6 +18,32 @@ const codeExamples = {
   const right = arr.filter(x => x > pivot);
   return [...quickSort(left), pivot, ...quickSort(right)];
 }`,
+  "Merge Sort": `function mergeSort(arr) {
+  if (arr.length <= 1) return arr;
+
+  const mid = Math.floor(arr.length / 2);
+  const left = mergeSort(arr.slice(0, mid));
+  const right = mergeSort(arr.slice(mid));
+
+  return merge(left, right);
+}
+
+function merge(left, right) {
+  const result = [];
+  let i = 0, j = 0;
+
+  while (i < left.length && j < right.length) {
+    if (left[i] < right[j]) {
+      result.push(left[i]);
+      i++;
+    } else {
+      result.push(right[j]);
+      j++;
+    }
+  }
+
+  return result.concat(left.slice(i)).concat(right.slice(j));
+}`,
 };
 
 const algoInfo = {
@@ -27,9 +53,14 @@ const algoInfo = {
     desc: "A simple comparison-based sorting algorithm that repeatedly steps through the list, compares adjacent elements, and swaps them if they are out of order.",
   },
   "Quick Sort": {
-    time: "O(n log n) average, O(n²) worst",
+    time: "O(n²)",
     space: "O(log n)",
     desc: "A divide-and-conquer algorithm that selects a pivot element, partitions the array, and recursively sorts the partitions.",
+  },
+  "Merge Sort": {
+    time: "O(n log n)",
+    space: "O(n)",
+    desc: "A divide-and-conquer algorithm that divides the array into halves, recursively sorts them, and merges the sorted halves back together.",
   },
 };
 
@@ -91,9 +122,9 @@ export default function CodeViewPanel({ algorithm }) {
             lineHeight: 1.5,
 
             // make code fit container width:
-            whiteSpace: "pre-wrap",     // preserve newlines, allow wrapping
-            overflowWrap: "anywhere",   // wrap long tokens if needed
-            wordBreak: "break-word",    // extra safety
+            whiteSpace: "pre-wrap", // preserve newlines, allow wrapping
+            overflowWrap: "anywhere", // wrap long tokens if needed
+            wordBreak: "break-word", // extra safety
             tabSize: 2,
           }}
         >

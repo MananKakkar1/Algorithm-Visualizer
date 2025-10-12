@@ -3,49 +3,60 @@
 import { Card } from "./ui/card";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-// Generate bubble sort swap steps: returns array of {i,j, swapped}
+/* ================================
+   STEP GENERATORS
+   - Bubble: compare/swap
+   - Quick:  compare/swap
+   - Merge:  compare/set
+   Each step uses one of:
+   { op: "compare", a, b }
+   { op: "swap", i, j }
+   { op: "set", index, value }
+==================================*/
+
+// Bubble Sort
 function generateBubbleSteps(arr) {
   const a = arr.slice();
   const steps = [];
   const n = a.length;
   for (let i = 0; i < n; i++) {
     for (let j = 0; j < n - i - 1; j++) {
-      steps.push({ i: j, j: j + 1, compare: true, swapped: false });
+      steps.push({ op: "compare", a: j, b: j + 1 });
       if (a[j] > a[j + 1]) {
-        // swap
-        const tmp = a[j];
-        a[j] = a[j + 1];
-        a[j + 1] = tmp;
-        steps.push({ i: j, j: j + 1, compare: false, swapped: true });
+        [a[j], a[j + 1]] = [a[j + 1], a[j]];
+        steps.push({ op: "swap", i: j, j: j + 1 });
       }
     }
   }
   return steps;
 }
 
+// Quick Sort
 function generateQuickSteps(arr) {
   const a = arr.slice();
   const steps = [];
 
   function swap(i, j) {
-    const tmp = a[i];
-    a[i] = a[j];
-    a[j] = tmp;
+    [a[i], a[j]] = [a[j], a[i]];
   }
 
   function partition(l, r) {
     const pivot = a[r];
     let i = l;
     for (let j = l; j < r; j++) {
-      steps.push({ i: j, j: r, compare: true, swapped: false });
+      steps.push({ op: "compare", a: j, b: r }); // compare with pivot
       if (a[j] < pivot) {
-        steps.push({ i: i, j: j, compare: false, swapped: true });
-        swap(i, j);
+        if (i !== j) {
+          swap(i, j);
+          steps.push({ op: "swap", i, j });
+        }
         i++;
       }
     }
-    steps.push({ i: i, j: r, compare: false, swapped: true });
-    swap(i, r);
+    if (i !== r) {
+      swap(i, r);
+      steps.push({ op: "swap", i, j: r });
+    }
     return i;
   }
 
@@ -60,6 +71,61 @@ function generateQuickSteps(arr) {
   return steps;
 }
 
+// Merge Sort (uses "set" operations)
+function generateMergeSteps(arr) {
+  const a = arr.slice();
+  const steps = [];
+
+  function mergeSort(start, end) {
+    if (end - start <= 1) return;
+    const mid = Math.floor((start + end) / 2);
+    mergeSort(start, mid);
+    mergeSort(mid, end);
+    merge(start, mid, end);
+  }
+
+  function merge(start, mid, end) {
+    const left = a.slice(start, mid);
+    const right = a.slice(mid, end);
+    let i = 0, j = 0, k = start;
+
+    while (i < left.length && j < right.length) {
+      // visualize comparison of heads
+      steps.push({ op: "compare", a: start + i, b: mid + j });
+
+      if (left[i] <= right[j]) {
+        a[k] = left[i];
+        steps.push({ op: "set", index: k, value: left[i] });
+        i++;
+      } else {
+        a[k] = right[j];
+        steps.push({ op: "set", index: k, value: right[j] });
+        j++;
+      }
+      k++;
+    }
+
+    while (i < left.length) {
+      a[k] = left[i];
+      steps.push({ op: "set", index: k, value: left[i] });
+      i++; k++;
+    }
+
+    while (j < right.length) {
+      a[k] = right[j];
+      steps.push({ op: "set", index: k, value: right[j] });
+      j++; k++;
+    }
+  }
+
+  mergeSort(0, a.length);
+  return steps;
+}
+
+/* ================================
+   VISUALIZATION COMPONENT
+==================================*/
+
 export default function VisualizationArea({
   algorithm,
   isPlaying,
@@ -67,19 +133,16 @@ export default function VisualizationArea({
   stepTick = 0,
   resetTick = 0,
 }) {
-  // sourceArray is the immutable input snapshot used to generate steps
   const [sourceArray, setSourceArray] = useState([]);
-  // visual array is the one we mutate and display while stepping
   const [array, setArray] = useState([]);
-  const [active, setActive] = useState([]); // indices being compared/highlighted
+  const [active, setActive] = useState([]); // indices being highlighted
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  // initial array (only on reset)
+  // Generate a random array on reset
   useEffect(() => {
-    const newArray = Array.from(
-      { length: 20 },
-      () => Math.floor(Math.random() * 100) + 10
+    const newArray = Array.from({ length: 20 }, () =>
+      Math.floor(Math.random() * 100) + 10
     );
     setSourceArray(newArray);
     setArray(newArray.slice());
@@ -87,7 +150,7 @@ export default function VisualizationArea({
     setActive([]);
   }, [resetTick]);
 
-  // when algorithm changes, reset the step index and active highlights and reset visual array to source
+  // Reset when algorithm changes
   useEffect(() => {
     setStepIndex(0);
     setActive([]);
@@ -95,56 +158,61 @@ export default function VisualizationArea({
     setFinished(false);
   }, [algorithm, sourceArray]);
 
-  // steps are memoized for current array snapshot and selected algorithm
+  // Pick steps per algorithm
   const steps = useMemo(() => {
-    if ((algorithm || "").toLowerCase().includes("quick")) {
-      return generateQuickSteps(sourceArray);
-    }
-    // default to bubble sort
+    const name = (algorithm || "").toLowerCase();
+    if (name.includes("quick")) return generateQuickSteps(sourceArray);
+    if (name.includes("merge")) return generateMergeSteps(sourceArray);
     return generateBubbleSteps(sourceArray);
   }, [sourceArray, algorithm]);
 
-  // keep refs to steps and stepIndex so playback doesn't re-generate steps mid-run
+  // Refs for stable playback
   const stepsRef = useRef(steps);
-  useEffect(() => {
-    stepsRef.current = steps;
-  }, [steps]);
+  useEffect(() => { stepsRef.current = steps; }, [steps]);
 
   const stepIndexRef = useRef(stepIndex);
-  useEffect(() => {
-    stepIndexRef.current = stepIndex;
-  }, [stepIndex]);
+  useEffect(() => { stepIndexRef.current = stepIndex; }, [stepIndex]);
 
-  // advance a single step (play or manual step)
+  // Execute one visualization step
   const doStep = () => {
     const currentIndex = stepIndexRef.current;
     const s = stepsRef.current[currentIndex];
-    if (!s) return; // finished
-    if (s.compare) {
-      setActive([s.i, s.j]);
-    } else if (s.swapped) {
+    if (!s) return;
+
+    if (s.op === "compare" || s.compare) {
+      // support legacy shape
+      const ia = s.a ?? s.i;
+      const jb = s.b ?? s.j;
+      setActive([ia, jb].filter((v) => v !== undefined));
+    } else if (s.op === "swap" || s.swapped) {
+      const i = s.i, j = s.j;
       setArray((prev) => {
         const copy = prev.slice();
-        const tmp = copy[s.i];
-        copy[s.i] = copy[s.j];
-        copy[s.j] = tmp;
+        [copy[i], copy[j]] = [copy[j], copy[i]];
         return copy;
       });
-      setActive([s.i, s.j]);
+      setActive([i, j]);
+    } else if (s.op === "set" || "value" in s) {
+      const idx = s.index ?? s.i;
+      setArray((prev) => {
+        const copy = prev.slice();
+        copy[idx] = s.value;
+        return copy;
+      });
+      setActive([idx]);
     }
+
     setStepIndex((idx) => {
       const next = idx + 1;
-      // if we've reached or passed the end, trigger finished animation
-      if (next >= (stepsRef.current ? stepsRef.current.length : 0)) {
+      if (next >= (stepsRef.current?.length ?? 0)) {
         setFinished(true);
-        // clear finished state after animation (2s)
-        setTimeout(() => setFinished(false), 2000);
+        setTimeout(() => setFinished(false), 1500);
       }
       return next;
     });
   };
 
-  // handle manual stepTick prop (increments when user clicks step)
+  // Manual step
   const lastStepTick = useRef(stepTick);
   useEffect(() => {
     if (stepTick !== lastStepTick.current) {
@@ -153,39 +221,56 @@ export default function VisualizationArea({
     }
   }, [stepTick]);
 
-  // autoplay when isPlaying; interval depends on speed
+  // Autoplay
   useEffect(() => {
-    if (!isPlaying) return undefined;
-    // Map speed (0..100) to interval (2000ms slow .. 50ms fast)
-    const intervalMs = Math.max(
-      50,
-      Math.round(2000 - (speed / 100) * (2000 - 50))
-    );
-    const id = setInterval(() => {
-      doStep();
-    }, intervalMs);
+    if (!isPlaying) return;
+    const intervalMs = Math.max(50, Math.round(2000 - (speed / 100) * (2000 - 50)));
+    const id = setInterval(doStep, intervalMs);
     return () => clearInterval(id);
   }, [isPlaying, speed]);
 
   return (
-    <Card className="flex-1 p-6 card">
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold">{algorithm}</h2>
-        <p className="text-sm text-muted-foreground">
+    <Card
+      className="p-5 card"
+      style={{
+        backgroundColor: "#0b1220",
+        border: "1px solid #1c2333",
+        borderRadius: "10px",
+        color: "#e0e0ff",
+      }}
+    >
+      <div style={{ marginBottom: "10px" }}>
+        <h2 style={{ fontSize: "18px", fontWeight: 600, marginLeft: 15 }}>{algorithm}</h2>
+        <p style={{ fontSize: "13px", color: "#8b8fb3", marginLeft: 15 }}>
           Visualizing algorithm execution
         </p>
       </div>
 
-      <div className={"visualization-bars" + (finished ? " sorted" : "")}>
+      {/* Compact visualization area */}
+      <div
+        className={"visualization-bars" + (finished ? " sorted" : "")}
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          height: "220px",
+          backgroundColor: "#111830",
+          borderRadius: "8px",
+          padding: "10px 6px",
+          overflow: "hidden",
+        }}
+      >
         {array.map((value, idx) => (
           <div
             key={idx}
             className="visual-bar"
             style={{
-              height: `${value}%`,
-              backgroundColor: active.includes(idx)
-                ? "var(--destructive)"
-                : "var(--primary)",
+              flex: 1,
+              margin: "0 1px",
+              borderRadius: "3px 3px 0 0",
+              height: `${value * 1.75}px`,
+              backgroundColor: active.includes(idx) ? "#ff4d6d" : "#5a3fc0",
+              transition: "height 0.2s, background-color 0.2s",
             }}
           />
         ))}
