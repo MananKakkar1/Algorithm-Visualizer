@@ -80,7 +80,9 @@ function generateMergeSteps(arr) {
   function merge(start, mid, end) {
     const left = a.slice(start, mid);
     const right = a.slice(mid, end);
-    let i = 0, j = 0, k = start;
+    let i = 0,
+      j = 0,
+      k = start;
 
     while (i < left.length && j < right.length) {
       steps.push({ op: "compare", a: start + i, b: mid + j });
@@ -95,16 +97,17 @@ function generateMergeSteps(arr) {
       }
       k++;
     }
-
     while (i < left.length) {
       a[k] = left[i];
       steps.push({ op: "set", index: k, value: left[i] });
-      i++; k++;
+      i++;
+      k++;
     }
     while (j < right.length) {
       a[k] = right[j];
       steps.push({ op: "set", index: k, value: right[j] });
-      j++; k++;
+      j++;
+      k++;
     }
   }
 
@@ -206,46 +209,40 @@ function generateStackSteps() {
   return steps;
 }
 
-// Expression Evaluation using Stack (Postfix evaluation simulation)
+// Expression Evaluation (Postfix)
 function generateExpressionEvalSteps() {
   const steps = [];
-  const expression = ["2", "3", "+", "4", "*"]; // Example: (2 + 3) * 4
+  const expression = ["2", "3", "+", "4", "*"];
   let stack = [];
 
   for (const token of expression) {
     if (!isNaN(parseInt(token))) {
       stack.push(Number(token));
-      steps.push({
-        stack: [...stack],
-        action: "push",
-        value: Number(token),
-      });
-    } else {
-      if (stack.length >= 2) {
-        const b = stack.pop();
-        const a = stack.pop();
-        let result;
-        if (token === "+") result = a + b;
-        else if (token === "-") result = a - b;
-        else if (token === "*") result = a * b;
-        else if (token === "/") result = a / b;
-
-        stack.push(result);
-        steps.push({
-          stack: [...stack],
-          action: "eval",
-          value: result,
-        });
-      }
+      steps.push({ stack: [...stack], action: "push", value: Number(token) });
+    } else if (stack.length >= 2) {
+      const b = stack.pop();
+      const a = stack.pop();
+      let result;
+      if (token === "+") result = a + b;
+      else if (token === "-") result = a - b;
+      else if (token === "*") result = a * b;
+      else if (token === "/") result = a / b;
+      stack.push(result);
+      steps.push({ stack: [...stack], action: "eval", value: result });
     }
   }
-
-  steps.push({
-    stack: [...stack],
-    action: "done",
-  });
-
+  steps.push({ stack: [...stack], action: "done" });
   return steps;
+}
+
+/* ---------- Linked Lists (NEW) ---------- */
+
+// just do a simple left-to-right traversal, highlight node index
+function generateSinglyListSteps(list) {
+  return list.map((_, i) => ({ kind: "list-visit", index: i }));
+}
+function generateDoublyListSteps(list) {
+  return list.map((_, i) => ({ kind: "list-visit", index: i }));
 }
 
 /* ================================
@@ -267,6 +264,10 @@ export default function VisualizationArea({
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
 
+  // linked list state
+  const [linkedList, setLinkedList] = useState([]);
+  const [activeNode, setActiveNode] = useState(-1);
+
   useEffect(() => {
     const newArray = Array.from({ length: 20 }, () =>
       Math.floor(Math.random() * 100) + 10
@@ -274,6 +275,8 @@ export default function VisualizationArea({
     setSourceArray(newArray);
     setArray(newArray.slice());
     setStack([5]);
+    setLinkedList(newArray.slice(0, 6)); // 6 nodes
+    setActiveNode(-1);
     setStepIndex(0);
     setActive([]);
     setHighlightAction("");
@@ -284,6 +287,8 @@ export default function VisualizationArea({
     setActive([]);
     setArray(sourceArray.slice());
     setStack([5]);
+    setLinkedList(sourceArray.slice(0, 6));
+    setActiveNode(-1);
     setHighlightAction("");
     setFinished(false);
   }, [algorithm, sourceArray]);
@@ -291,32 +296,43 @@ export default function VisualizationArea({
   const steps = useMemo(() => {
     const algo = (algorithm || "").toLowerCase();
 
+    // linked lists
+    if (algo.includes("singly")) return generateSinglyListSteps(linkedList);
+    if (algo.includes("doubly")) return generateDoublyListSteps(linkedList);
+
+    // others
     if (algo.includes("quick")) return generateQuickSteps(sourceArray);
     if (algo.includes("merge")) return generateMergeSteps(sourceArray);
     if (algo.includes("heap")) return generateHeapSteps(sourceArray);
     if (algo.includes("bubble")) return generateBubbleSteps(sourceArray);
     if (algo.includes("rotation")) return generateArrayRotationSteps(sourceArray);
     if (algo.includes("traversal")) return generateArrayTraversalSteps(sourceArray);
-    if (algo.includes("expression")) return generateExpressionEvalSteps();
     if (algo.includes("stack")) return generateStackSteps();
+    if (algo.includes("expression")) return generateExpressionEvalSteps();
 
     return [];
-  }, [sourceArray, algorithm]);
+  }, [sourceArray, linkedList, algorithm]);
 
   const stepsRef = useRef(steps);
-  useEffect(() => { stepsRef.current = steps; }, [steps]);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
 
   const stepIndexRef = useRef(stepIndex);
-  useEffect(() => { stepIndexRef.current = stepIndex; }, [stepIndex]);
+  useEffect(() => {
+    stepIndexRef.current = stepIndex;
+  }, [stepIndex]);
 
   const doStep = () => {
     const s = stepsRef.current[stepIndexRef.current];
     if (!s) return;
 
-    if (
-      algorithm.toLowerCase().includes("stack") ||
-      algorithm.toLowerCase().includes("expression")
-    ) {
+    const algo = algorithm.toLowerCase();
+
+    // linked list handling
+    if (algo.includes("singly") || algo.includes("doubly")) {
+      if (s.kind === "list-visit") setActiveNode(s.index);
+    } else if (algo.includes("stack") || algo.includes("expression")) {
       setStack(s.stack || []);
       setHighlightAction(
         s.action === "push"
@@ -365,13 +381,40 @@ export default function VisualizationArea({
 
   useEffect(() => {
     if (!isPlaying) return;
-    const interval = setInterval(doStep, Math.max(50, Math.round(2000 - (speed / 100) * 1950)));
+    const interval = setInterval(
+      doStep,
+      Math.max(50, Math.round(2000 - (speed / 100) * 1950))
+    );
     return () => clearInterval(interval);
   }, [isPlaying, speed]);
+
+  const isLinkedList =
+    algorithm.toLowerCase().includes("linked") ||
+    algorithm.toLowerCase().includes("singly") ||
+    algorithm.toLowerCase().includes("doubly");
 
   const isStack =
     algorithm.toLowerCase().includes("stack") ||
     algorithm.toLowerCase().includes("expression");
+
+  const isDoubly = algorithm.toLowerCase().includes("doubly");
+
+  // Small SVG arrows
+  const ArrowRight = () => (
+    <svg width="60" height="14" viewBox="0 0 60 14" style={{ opacity: 0.9 }}>
+      <line x1="2" y1="7" x2="54" y2="7" stroke="#5a6ad6" strokeWidth="2" />
+      <polygon points="54,2 58,7 54,12" fill="#5a6ad6" />
+    </svg>
+  );
+
+  const ArrowBoth = () => (
+    <svg width="80" height="18" viewBox="0 0 80 18" style={{ opacity: 0.9 }}>
+      <line x1="10" y1="6" x2="66" y2="6" stroke="#5a6ad6" strokeWidth="2" />
+      <polygon points="66,1 72,6 66,11" fill="#5a6ad6" />
+      <line x1="70" y1="12" x2="14" y2="12" stroke="#5a6ad6" strokeWidth="2" />
+      <polygon points="14,7 8,12 14,17" fill="#5a6ad6" />
+    </svg>
+  );
 
   return (
     <Card
@@ -392,8 +435,60 @@ export default function VisualizationArea({
         </p>
       </div>
 
-      {/* === STACK VISUALIZATION === */}
-      {isStack ? (
+      {/* === LINKED LIST VISUALIZATION === */}
+      {isLinkedList ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "10px",
+            height: "260px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+            transition: "box-shadow 0.5s ease",
+          }}
+        >
+          {linkedList.map((val, idx) => (
+            <div key={idx} style={{ display: "flex", alignItems: "center" }}>
+              <div
+                style={{
+                  minWidth: 70,
+                  height: 46,
+                  padding: "0 12px",
+                  backgroundColor: finished
+                    ? "#c5b3ff"
+                    : idx === activeNode
+                    ? "#b39aff"
+                    : "#5a3fc0",
+                  border: "1px solid #b39aff",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 700,
+                  color: "white",
+                  boxShadow: finished
+                    ? "0 0 14px rgba(179,154,255,0.65)"
+                    : "0 2px 6px rgba(0,0,0,0.35)",
+                  transition: "all 0.35s ease",
+                }}
+              >
+                {val}
+              </div>
+
+              {idx < linkedList.length - 1 && (
+                <div style={{ margin: "0 8px" }}>
+                  {isDoubly ? <ArrowBoth /> : <ArrowRight />}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : isStack ? (
+        /* === STACK VISUALIZATION === */
         <div
           style={{
             display: "flex",
@@ -404,8 +499,8 @@ export default function VisualizationArea({
             backgroundColor: "#111830",
             borderRadius: "8px",
             padding: "10px 20px",
-            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
             transition: "box-shadow 0.5s ease",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
           }}
         >
           {/* Tube container */}
@@ -416,7 +511,8 @@ export default function VisualizationArea({
               height: "100%",
               border: "3px solid #3b3f63",
               borderRadius: "12px",
-              background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
+              background:
+                "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
               boxShadow: finished
                 ? "0 0 15px rgba(179,154,255,0.6) inset"
                 : "inset 0 0 10px #1c2240",
@@ -451,7 +547,8 @@ export default function VisualizationArea({
                   boxShadow: finished
                     ? "0 0 15px rgba(179,154,255,0.7)"
                     : "0 2px 6px rgba(0,0,0,0.3)",
-                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
+                  transition:
+                    "all 0.5s ease, transform 0.4s ease-in-out",
                 }}
               >
                 {val}
@@ -471,20 +568,36 @@ export default function VisualizationArea({
               gap: "10px",
             }}
           >
-            {["PUSH", "POP", "EVAL"].map((label) => (
-              <div
-                key={label}
-                style={{
-                  color:
-                    highlightAction === label.toLowerCase() ? "white" : "#666a80",
-                  fontWeight: highlightAction === label.toLowerCase() ? "600" : "400",
-                  fontSize: "15px",
-                  transition: "color 0.3s ease",
-                }}
-              >
-                {label}
-              </div>
-            ))}
+            <div
+              style={{
+                color: highlightAction === "push" ? "white" : "#666a80",
+                fontWeight: highlightAction === "push" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              PUSH
+            </div>
+            <div
+              style={{
+                color: highlightAction === "pop" ? "white" : "#666a80",
+                fontWeight: highlightAction === "pop" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+                POP
+            </div>
+            <div
+              style={{
+                color: highlightAction === "eval" ? "white" : "#666a80",
+                fontWeight: highlightAction === "eval" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              EVAL
+            </div>
           </div>
         </div>
       ) : (

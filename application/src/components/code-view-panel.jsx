@@ -110,6 +110,98 @@ def merge(left, right):
 
 # Example:
 # evaluate(["2", "3", "+", "4", "*"]) -> 20`,
+
+  // NEW: Singly Linked List
+  "Singly Linked List": `class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
+
+
+class SinglyLinkedList:
+    def __init__(self):
+        self.head = None
+
+    def append(self, data):
+        new_node = Node(data)
+        if not self.head:
+            self.head = new_node
+            return
+        cur = self.head
+        while cur.next:
+            cur = cur.next
+        cur.next = new_node
+
+    def delete(self, key):
+        cur = self.head
+        prev = None
+        while cur and cur.data != key:
+            prev = cur
+            cur = cur.next
+        if not cur:  # not found
+            return
+        if prev is None:      # delete head
+            self.head = cur.next
+        else:
+            prev.next = cur.next
+
+    def traverse(self):
+        cur = self.head
+        while cur:
+            print(cur.data, end=" -> " if cur.next else "")
+            cur = cur.next
+        print()`,
+
+  // NEW: Doubly Linked List
+  "Doubly Linked List": `class DNode:
+    def __init__(self, data):
+        self.data = data
+        self.prev = None
+        self.next = None
+
+
+class DoublyLinkedList:
+    def __init__(self):
+        self.head = None
+        self.tail = None
+
+    def append(self, data):
+        new_node = DNode(data)
+        if not self.head:
+            self.head = self.tail = new_node
+            return
+        self.tail.next = new_node
+        new_node.prev = self.tail
+        self.tail = new_node
+
+    def delete(self, key):
+        cur = self.head
+        while cur and cur.data != key:
+            cur = cur.next
+        if not cur:
+            return
+        if cur.prev:
+            cur.prev.next = cur.next
+        else:
+            self.head = cur.next
+        if cur.next:
+            cur.next.prev = cur.prev
+        else:
+            self.tail = cur.prev
+
+    def traverse_forward(self):
+        cur = self.head
+        while cur:
+            print(cur.data, end=" <-> " if cur.next else "")
+            cur = cur.next
+        print()
+
+    def traverse_backward(self):
+        cur = self.tail
+        while cur:
+            print(cur.data, end=" <-> " if cur.prev else "")
+            cur = cur.prev
+        print()`,
 };
 
 const algoInfo = {
@@ -152,6 +244,18 @@ const algoInfo = {
     time: "O(n)",
     space: "O(n)",
     desc: "Evaluates a postfix expression using a stack by pushing operands and applying operators as they appear.",
+  },
+
+  // NEW: Linked lists
+  "Singly Linked List": {
+    time: "Traversal O(n), append O(n) (O(1) with tail), delete O(n)",
+    space: "O(1) auxiliary",
+    desc: "Linear nodes with a single next pointer. Common ops: append, delete by value, and forward traversal.",
+  },
+  "Doubly Linked List": {
+    time: "Traversal O(n), append O(1) with tail, delete O(1) with node ref",
+    space: "O(1) auxiliary (extra prev pointer per node)",
+    desc: "Nodes store next and prev pointers, allowing efficient forward and backward traversal and easier deletions.",
   },
 };
 
