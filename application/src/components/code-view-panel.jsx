@@ -1,5 +1,4 @@
 import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { ScrollArea } from "./ui/scroll-area";
 
 const codeExamples = {
   "Bubble Sort": `function bubbleSort(arr) {
@@ -23,48 +22,149 @@ const codeExamples = {
 
 const algoInfo = {
   "Bubble Sort": {
-    time: "O(n^2)",
+    time: "O(n²)",
     space: "O(1)",
-    desc: "Simple comparison-based algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
+    desc: "A simple comparison-based sorting algorithm that repeatedly steps through the list, compares adjacent elements, and swaps them if they are out of order.",
   },
   "Quick Sort": {
-    time: "O(n log n) average, O(n^2) worst",
-    space: "O(log n) average",
-    desc: "Divide-and-conquer algorithm that picks a pivot, partitions the array, then recursively sorts the partitions.",
+    time: "O(n log n) average, O(n²) worst",
+    space: "O(log n)",
+    desc: "A divide-and-conquer algorithm that selects a pivot element, partitions the array, and recursively sorts the partitions.",
   },
 };
 
 export default function CodeViewPanel({ algorithm }) {
   const code = codeExamples[algorithm] || "// Select an algorithm to view code";
+  const info = algoInfo[algorithm];
 
   return (
-    <Card className="flex-1 flex flex-col card">
-      <CardHeader>
-        <CardTitle className="text-base">Pseudocode</CardTitle>
+    <Card
+      className="flex-1 flex flex-col card"
+      style={{
+        backgroundColor: "#0b1220",
+        color: "#e0e0ff",
+        border: "1px solid #1c2333",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* --- PSEUDOCODE HEADER --- */}
+      <CardHeader
+        style={{
+          borderBottom: "1px solid #1c2333",
+          paddingBottom: "0.5rem",
+          marginBottom: "0.5rem",
+        }}
+      >
+        <CardTitle
+          style={{
+            fontSize: "16px",
+            fontWeight: "600",
+            color: "#b39aff",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Pseudocode
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 overflow-hidden">
-        <ScrollArea className="scroll-area">
-          <pre className="text-sm font-mono text-muted-foreground">
-            <code>{code}</code>
-          </pre>
-        </ScrollArea>
-        <div className="p-4">
-          {algoInfo[algorithm] ? (
-            <div>
-              <h4 className="text-base">Complexity</h4>
-              <p className="text-sm">Time: {algoInfo[algorithm].time}</p>
-              <p className="text-sm">Space: {algoInfo[algorithm].space}</p>
-              <h4 className="text-base" style={{ marginTop: "0.5rem" }}>
-                About
-              </h4>
-              <p className="text-sm">{algoInfo[algorithm].desc}</p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Select an algorithm to see details.
-            </p>
-          )}
+
+      {/* --- PSEUDOCODE AREA (wrap to fit width) --- */}
+      <CardContent
+        style={{
+          flex: "0 0 auto",
+          paddingBottom: "1rem",
+          borderBottom: "1px solid #1c2333",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "#111832",
+            border: "1px solid #1c2333",
+            borderRadius: "8px",
+            padding: "10px 12px",
+            width: "100%",
+
+            fontFamily:
+              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+            fontSize: "13px",
+            color: "#c7c8f9",
+            lineHeight: 1.5,
+
+            // make code fit container width:
+            whiteSpace: "pre-wrap",     // preserve newlines, allow wrapping
+            overflowWrap: "anywhere",   // wrap long tokens if needed
+            wordBreak: "break-word",    // extra safety
+            tabSize: 2,
+          }}
+        >
+          {code}
         </div>
+      </CardContent>
+
+      {/* --- DETAILS HEADER --- */}
+      <CardHeader
+        style={{
+          borderBottom: "1px solid #1c2333",
+          paddingBottom: "0.5rem",
+          marginBottom: "0.5rem",
+          marginTop: "0.75rem",
+        }}
+      >
+        <CardTitle
+          style={{
+            fontSize: "16px",
+            fontWeight: "600",
+            color: "#b39aff",
+            letterSpacing: "0.5px",
+          }}
+        >
+          Algorithm Details
+        </CardTitle>
+      </CardHeader>
+
+      {/* --- DETAILS CONTENT --- */}
+      <CardContent style={{ flex: "1 1 auto" }}>
+        {info ? (
+          <div style={{ lineHeight: "1.6" }}>
+            <p
+              style={{
+                fontSize: "13.5px",
+                color: "#c7c8f9",
+                marginBottom: "6px",
+              }}
+            >
+              <strong style={{ color: "#b39aff" }}>Time Complexity:</strong>{" "}
+              {info.time}
+            </p>
+            <p
+              style={{
+                fontSize: "13.5px",
+                color: "#c7c8f9",
+                marginBottom: "10px",
+              }}
+            >
+              <strong style={{ color: "#b39aff" }}>Space Complexity:</strong>{" "}
+              {info.space}
+            </p>
+            <p
+              style={{
+                fontSize: "13.5px",
+                color: "#c7c8f9",
+              }}
+            >
+              {info.desc}
+            </p>
+          </div>
+        ) : (
+          <p
+            style={{
+              fontSize: "13.5px",
+              color: "#8b8fb3",
+            }}
+          >
+            Select an algorithm to see details.
+          </p>
+        )}
       </CardContent>
     </Card>
   );

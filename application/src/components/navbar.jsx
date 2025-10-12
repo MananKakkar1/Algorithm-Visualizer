@@ -71,7 +71,7 @@ export default function Navbar({ theme, toggleTheme }) {
           flexShrink: 0,
         }}
       >
-        <Button
+        {/* <Button
           variant="ghost"
           size="icon"
           className="btn--ghost btn--icon"
@@ -102,9 +102,9 @@ export default function Navbar({ theme, toggleTheme }) {
           ) : (
             <Moon className="h-5 w-5" />
           )}
-        </Button>
+        </Button> */}
 
-        <Button
+        {/* <Button
           variant="ghost"
           size="icon"
           className="btn--ghost btn--icon"
@@ -145,7 +145,7 @@ export default function Navbar({ theme, toggleTheme }) {
           >
             <Github className="h-5 w-5" />
           </a>
-        </Button>
+        </Button> */}
       </div>
     </header>
   );

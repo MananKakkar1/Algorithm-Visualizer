@@ -44,7 +44,7 @@ export default function Sidebar({
         transition: "width 0.3s ease",
       }}
     >
-      {/* Toggle Button */}
+      {/* Toggle Button
       <Button
         variant="ghost"
         size="icon"
@@ -81,7 +81,7 @@ export default function Sidebar({
         ) : (
           <ChevronRight className="h-4 w-4" />
         )}
-      </Button>
+      </Button> */}
 
       {isOpen && (
         <div

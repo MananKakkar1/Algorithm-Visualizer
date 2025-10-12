@@ -10,7 +10,6 @@ import CodeEditorPanel from "./components/code-editor-panel";
 
 export default function App() {
   const [theme, setTheme] = useState("dark");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Bubble Sort");
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(50);
@@ -21,7 +20,7 @@ export default function App() {
     setTheme((t) => (t === "dark" ? "light" : "dark"));
   };
 
-  // Sync theme to documentElement so CSS variables in `.dark {}` apply globally
+  // Sync theme globally
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -32,15 +31,28 @@ export default function App() {
 
   return (
     <div className={`${theme === "dark" ? "dark" : ""}`}>
-      <div className="flex flex-col app-root bg-background text-foreground">
+      <div className="flex flex-col app-root bg-background text-foreground min-h-screen">
+        {/* Navbar */}
         <Navbar theme={theme} toggleTheme={toggleTheme} />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <div className={`sidebar ${sidebarOpen ? "open" : "closed"}`}>
+          {/* Sidebar — always visible, sticky */}
+          <div
+            className="sidebar"
+            style={{
+              width: "260px",
+              backgroundColor: "#0b1220",
+              borderRight: "1px solid #1c2333",
+              color: "#e0e0ff",
+              position: "sticky",
+              top: "0",
+              height: "calc(100vh - 60px)", // below navbar
+              overflowY: "auto",
+              scrollbarWidth: "none",
+            }}
+          >
             <Sidebar
-              isOpen={sidebarOpen}
-              onToggle={() => setSidebarOpen(!sidebarOpen)}
+              isOpen={true} // Always open
               selectedAlgorithm={selectedAlgorithm}
               onSelectAlgorithm={setSelectedAlgorithm}
             />
@@ -51,6 +63,7 @@ export default function App() {
             <div className="flex flex-1 gap-4 p-4 overflow-hidden">
               {/* Visualization + Control Panel */}
               <div className="flex flex-col flex-1 gap-4 min-w-0">
+                {/* Visualization Area (keeps same height as before) */}
                 <div className="flex-1 card p-4">
                   <VisualizationArea
                     algorithm={selectedAlgorithm}
@@ -61,6 +74,7 @@ export default function App() {
                   />
                 </div>
 
+                {/* Control Panel */}
                 <div className="card p-4">
                   <ControlPanel
                     isPlaying={isPlaying}
@@ -76,7 +90,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Side Panels */}
+              {/* Code Panels */}
               <div className="flex flex-col gap-4 w-96 min-w-[24rem]">
                 <div className="card shadow flex-1">
                   <CodeViewPanel algorithm={selectedAlgorithm} />
