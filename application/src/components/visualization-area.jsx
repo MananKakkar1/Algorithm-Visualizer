@@ -87,7 +87,9 @@ function generateMergeSteps(arr) {
   function merge(start, mid, end) {
     const left = a.slice(start, mid);
     const right = a.slice(mid, end);
-    let i = 0, j = 0, k = start;
+    let i = 0,
+      j = 0,
+      k = start;
 
     while (i < left.length && j < right.length) {
       // visualize comparison of heads
@@ -108,17 +110,75 @@ function generateMergeSteps(arr) {
     while (i < left.length) {
       a[k] = left[i];
       steps.push({ op: "set", index: k, value: left[i] });
-      i++; k++;
+      i++;
+      k++;
     }
 
     while (j < right.length) {
       a[k] = right[j];
       steps.push({ op: "set", index: k, value: right[j] });
-      j++; k++;
+      j++;
+      k++;
     }
   }
 
   mergeSort(0, a.length);
+  return steps;
+}
+
+// Generate Heap Sort steps: returns array of { i, j, compare, swapped }
+function generateHeapSteps(arr) {
+  const a = arr.slice();
+  const steps = [];
+
+  const swap = (i, j) => {
+    const temp = a[i];
+    a[i] = a[j];
+    a[j] = temp;
+    steps.push({ i, j, compare: false, swapped: true });
+  };
+
+  const compare = (i, j) => {
+    steps.push({ i, j, compare: true, swapped: false });
+  };
+
+  const heapify = (n, i) => {
+    let largest = i;
+    const left = 2 * i + 1;
+    const right = 2 * i + 2;
+
+    // Compare left child
+    if (left < n) {
+      compare(left, largest);
+      if (a[left] > a[largest]) largest = left;
+    }
+
+    // Compare right child
+    if (right < n) {
+      compare(right, largest);
+      if (a[right] > a[largest]) largest = right;
+    }
+
+    // If largest is not root
+    if (largest !== i) {
+      swap(i, largest);
+      heapify(n, largest);
+    }
+  };
+
+  const n = a.length;
+
+  // Build max heap
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(n, i);
+  }
+
+  // Extract elements from heap
+  for (let i = n - 1; i > 0; i--) {
+    swap(0, i);
+    heapify(i, 0);
+  }
+
   return steps;
 }
 
@@ -141,8 +201,9 @@ export default function VisualizationArea({
 
   // Generate a random array on reset
   useEffect(() => {
-    const newArray = Array.from({ length: 20 }, () =>
-      Math.floor(Math.random() * 100) + 10
+    const newArray = Array.from(
+      { length: 20 },
+      () => Math.floor(Math.random() * 100) + 10
     );
     setSourceArray(newArray);
     setArray(newArray.slice());
@@ -163,15 +224,20 @@ export default function VisualizationArea({
     const name = (algorithm || "").toLowerCase();
     if (name.includes("quick")) return generateQuickSteps(sourceArray);
     if (name.includes("merge")) return generateMergeSteps(sourceArray);
+    if (name.includes("heap")) return generateHeapSteps(sourceArray);
     return generateBubbleSteps(sourceArray);
   }, [sourceArray, algorithm]);
 
   // Refs for stable playback
   const stepsRef = useRef(steps);
-  useEffect(() => { stepsRef.current = steps; }, [steps]);
+  useEffect(() => {
+    stepsRef.current = steps;
+  }, [steps]);
 
   const stepIndexRef = useRef(stepIndex);
-  useEffect(() => { stepIndexRef.current = stepIndex; }, [stepIndex]);
+  useEffect(() => {
+    stepIndexRef.current = stepIndex;
+  }, [stepIndex]);
 
   // Execute one visualization step
   const doStep = () => {
@@ -185,7 +251,8 @@ export default function VisualizationArea({
       const jb = s.b ?? s.j;
       setActive([ia, jb].filter((v) => v !== undefined));
     } else if (s.op === "swap" || s.swapped) {
-      const i = s.i, j = s.j;
+      const i = s.i,
+        j = s.j;
       setArray((prev) => {
         const copy = prev.slice();
         [copy[i], copy[j]] = [copy[j], copy[i]];
@@ -224,7 +291,10 @@ export default function VisualizationArea({
   // Autoplay
   useEffect(() => {
     if (!isPlaying) return;
-    const intervalMs = Math.max(50, Math.round(2000 - (speed / 100) * (2000 - 50)));
+    const intervalMs = Math.max(
+      50,
+      Math.round(2000 - (speed / 100) * (2000 - 50))
+    );
     const id = setInterval(doStep, intervalMs);
     return () => clearInterval(id);
   }, [isPlaying, speed]);
@@ -240,7 +310,9 @@ export default function VisualizationArea({
       }}
     >
       <div style={{ marginBottom: "10px" }}>
-        <h2 style={{ fontSize: "18px", fontWeight: 600, marginLeft: 15 }}>{algorithm}</h2>
+        <h2 style={{ fontSize: "18px", fontWeight: 600, marginLeft: 15 }}>
+          {algorithm}
+        </h2>
         <p style={{ fontSize: "13px", color: "#8b8fb3", marginLeft: 15 }}>
           Visualizing algorithm execution
         </p>

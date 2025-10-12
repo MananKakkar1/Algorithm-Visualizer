@@ -11,6 +11,7 @@ const codeExamples = {
   }
   return arr;
 }`,
+
   "Quick Sort": `function quickSort(arr) {
   if (arr.length <= 1) return arr;
   const pivot = arr[arr.length - 1];
@@ -18,6 +19,7 @@ const codeExamples = {
   const right = arr.filter(x => x > pivot);
   return [...quickSort(left), pivot, ...quickSort(right)];
 }`,
+
   "Merge Sort": `function mergeSort(arr) {
   if (arr.length <= 1) return arr;
 
@@ -44,6 +46,37 @@ function merge(left, right) {
 
   return result.concat(left.slice(i)).concat(right.slice(j));
 }`,
+
+  "Heap Sort": `function heapSort(arr) {
+  const n = arr.length;
+
+  function heapify(n, i) {
+    let largest = i;
+    const left = 2 * i + 1;
+    const right = 2 * i + 2;
+
+    if (left < n && arr[left] > arr[largest]) largest = left;
+    if (right < n && arr[right] > arr[largest]) largest = right;
+
+    if (largest !== i) {
+      [arr[i], arr[largest]] = [arr[largest], arr[i]];
+      heapify(n, largest);
+    }
+  }
+
+  // Build max heap
+  for (let i = Math.floor(n / 2) - 1; i >= 0; i--) {
+    heapify(n, i);
+  }
+
+  // Extract elements
+  for (let i = n - 1; i > 0; i--) {
+    [arr[0], arr[i]] = [arr[i], arr[0]];
+    heapify(i, 0);
+  }
+
+  return arr;
+}`
 };
 
 const algoInfo = {
@@ -53,7 +86,7 @@ const algoInfo = {
     desc: "A simple comparison-based sorting algorithm that repeatedly steps through the list, compares adjacent elements, and swaps them if they are out of order.",
   },
   "Quick Sort": {
-    time: "O(n²)",
+    time: "O(n log n) average, O(n²) worst",
     space: "O(log n)",
     desc: "A divide-and-conquer algorithm that selects a pivot element, partitions the array, and recursively sorts the partitions.",
   },
@@ -61,6 +94,11 @@ const algoInfo = {
     time: "O(n log n)",
     space: "O(n)",
     desc: "A divide-and-conquer algorithm that divides the array into halves, recursively sorts them, and merges the sorted halves back together.",
+  },
+  "Heap Sort": {
+    time: "O(n log n)",
+    space: "O(1)",
+    desc: "A comparison-based algorithm that builds a max heap, then repeatedly extracts the largest element and rebuilds the heap to sort the array in place.",
   },
 };
 
@@ -121,10 +159,9 @@ export default function CodeViewPanel({ algorithm }) {
             color: "#c7c8f9",
             lineHeight: 1.5,
 
-            // make code fit container width:
-            whiteSpace: "pre-wrap", // preserve newlines, allow wrapping
-            overflowWrap: "anywhere", // wrap long tokens if needed
-            wordBreak: "break-word", // extra safety
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            wordBreak: "break-word",
             tabSize: 2,
           }}
         >
