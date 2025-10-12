@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "./components/navbar";
 import Sidebar from "./components/sidebar";
 import VisualizationArea from "./components/visualization-area";
@@ -14,11 +14,21 @@ export default function App() {
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("Bubble Sort");
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(50);
+  const [stepTick, setStepTick] = useState(0);
+  const [resetTick, setResetTick] = useState(0);
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
-    document.documentElement.classList.toggle("dark");
+    setTheme((t) => (t === "dark" ? "light" : "dark"));
   };
+
+  // Sync theme to documentElement so CSS variables in `.dark {}` apply globally
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [theme]);
 
   return (
     <div className={`${theme === "dark" ? "dark" : ""}`}>
@@ -46,6 +56,8 @@ export default function App() {
                     algorithm={selectedAlgorithm}
                     isPlaying={isPlaying}
                     speed={speed}
+                    stepTick={stepTick}
+                    resetTick={resetTick}
                   />
                 </div>
 
@@ -53,8 +65,11 @@ export default function App() {
                   <ControlPanel
                     isPlaying={isPlaying}
                     onPlayPause={() => setIsPlaying(!isPlaying)}
-                    onStep={() => {}}
-                    onReset={() => setIsPlaying(false)}
+                    onStep={() => setStepTick((s) => s + 1)}
+                    onReset={() => {
+                      setIsPlaying(false);
+                      setResetTick((r) => r + 1);
+                    }}
                     speed={speed}
                     onSpeedChange={setSpeed}
                   />
