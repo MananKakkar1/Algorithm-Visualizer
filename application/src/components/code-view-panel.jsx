@@ -21,6 +21,19 @@ const codeExamples = {
 }`,
 };
 
+const algoInfo = {
+  "Bubble Sort": {
+    time: "O(n^2)",
+    space: "O(1)",
+    desc: "Simple comparison-based algorithm that repeatedly steps through the list, compares adjacent elements and swaps them if they are in the wrong order.",
+  },
+  "Quick Sort": {
+    time: "O(n log n) average, O(n^2) worst",
+    space: "O(log n) average",
+    desc: "Divide-and-conquer algorithm that picks a pivot, partitions the array, then recursively sorts the partitions.",
+  },
+};
+
 export default function CodeViewPanel({ algorithm }) {
   const code = codeExamples[algorithm] || "// Select an algorithm to view code";
 
@@ -35,6 +48,23 @@ export default function CodeViewPanel({ algorithm }) {
             <code>{code}</code>
           </pre>
         </ScrollArea>
+        <div className="p-4">
+          {algoInfo[algorithm] ? (
+            <div>
+              <h4 className="text-base">Complexity</h4>
+              <p className="text-sm">Time: {algoInfo[algorithm].time}</p>
+              <p className="text-sm">Space: {algoInfo[algorithm].space}</p>
+              <h4 className="text-base" style={{ marginTop: "0.5rem" }}>
+                About
+              </h4>
+              <p className="text-sm">{algoInfo[algorithm].desc}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Select an algorithm to see details.
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

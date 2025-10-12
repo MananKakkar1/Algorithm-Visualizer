@@ -1,23 +1,23 @@
 :root {
-  /* Light theme palette (hex fallbacks for broad browser support) */
-  --background: #ffffff;
-  --foreground: #111827; /* slate-900 */
-  --card: #ffffff;
-  --card-foreground: #111827;
-  --popover: #ffffff;
-  --popover-foreground: #111827;
-  --primary: #6366f1; /* indigo-500 */
-  --primary-foreground: #ffffff;
-  --secondary: #e6e7ff;
-  --secondary-foreground: #111827;
-  --muted: #f3f4f6;
-  --muted-foreground: #6b7280;
+  /* Dark-only palette */
+  --background: #0b1220; /* near black slate */
+  --foreground: #ffffff; /* force white text everywhere */
+  --card: #0f172a;
+  --card-foreground: #ffffff;
+  --popover: #0f172a;
+  --popover-foreground: #ffffff;
+  --primary: #6366f1;
+  --primary-foreground: #ffffff; /* ensure buttons text is white */
+  --secondary: #1f2937;
+  --secondary-foreground: #ffffff;
+  --muted: #111827;
+  --muted-foreground: #9ca3af;
   --accent: #7c3aed;
   --accent-foreground: #ffffff;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: #e5e7eb;
-  --input: #e5e7eb;
+  --border: #1f2937;
+  --input: #1f2937;
   --ring: #6366f1;
   --chart-1: #6366f1;
   --chart-2: #7c3aed;
@@ -25,18 +25,23 @@
   --chart-4: #f59e0b;
   --chart-5: #f97316;
   --radius: 0.5rem;
-  --sidebar: #0f172a;
+  --sidebar: #0b1220;
   --sidebar-foreground: #f8fafc;
   --sidebar-primary: #6366f1;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #0b1220;
+  --sidebar-accent: #071027;
   --sidebar-accent-foreground: #f8fafc;
   --sidebar-border: #1f2937;
   --sidebar-ring: #6366f1;
-  /* translucent fallbacks */
-  --color-background-50: rgba(255, 255, 255, 0.5);
+  /* translucent fallbacks for dark */
+  --color-background-50: rgba(15, 23, 42, 0.5);
   --color-primary-20: rgba(99, 102, 241, 0.2);
   --color-ring-35: rgba(99, 102, 241, 0.35);
+  /* Heading color for contrast vs body text */
+  --heading-color: #9fb0ff; /* soft pale blue for headings */
+  /* Button border colors to stand out on dark backgrounds */
+  --button-border: rgba(255, 255, 255, 0.06);
+  --button-border-hover: rgba(255, 255, 255, 0.12);
 }
 
 .dark {
@@ -49,8 +54,6 @@
   --popover-foreground: #f8fafc;
   --primary: #6366f1;
   --primary-foreground: #0b1220;
-  --secondary: #1f2937;
-  --secondary-foreground: #f8fafc;
   --muted: #111827;
   --muted-foreground: #9ca3af;
   --accent: #7c3aed;
@@ -137,6 +140,16 @@ body {
   color: var(--color-foreground);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial;
+}
+
+/* Headings color scheme */
+h1,
+h2,
+h3,
+h4,
+.cardTitle,
+.heading {
+  color: var(--heading-color);
 }
 
 /* Simple utility classes used across the app (replacement for a subset of Tailwind) */
@@ -449,9 +462,39 @@ body {
   font-size: 0.875rem;
   transition: background-color 0.15s;
 }
+.sidebar button {
+  background: var(
+    --color-card
+  ); /* use card background so buttons are not white */
+  color: var(--color-foreground);
+  border: 1px solid var(--button-border);
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease,
+    transform 0.06s ease;
+  user-select: none;
+}
+.sidebar button:hover {
+  background: color-mix(
+    in srgb,
+    var(--color-card) 85%,
+    var(--color-background-50) 15%
+  );
+  border-color: var(--button-border-hover);
+}
 .sidebar button.selected {
   background: var(--color-accent);
   color: var(--color-accent-foreground);
+  border-color: color-mix(in srgb, var(--color-accent) 40%, #ffffff 10%);
+}
+
+/* active (mouse down) and keyboard focus styles for clear clickable feedback */
+.sidebar button:active {
+  transform: translateY(1px);
+  background: color-mix(in srgb, var(--color-background-50) 60%, transparent);
+}
+.sidebar button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
 }
 
 .card {
@@ -475,6 +518,17 @@ body {
   padding-top: 0;
 }
 
+/* Make card containers flex so children can expand to full height */
+.card.flex-1 {
+  display: flex;
+  flex-direction: column;
+}
+.card .card-content.flex-1 {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
 .code-textarea {
   height: 100%;
   width: 100%;
@@ -484,7 +538,22 @@ body {
   padding: 0.75rem;
   font-family: ui-monospace, monospace;
   font-size: 0.875rem;
-  border: none;
+  border: 1px solid var(--color-input);
+  color: var(--color-foreground);
+  box-sizing: border-box;
+}
+
+.code-textarea {
+  height: 100%;
+  width: 100%;
+  resize: none;
+  border-radius: 6px;
+  background: var(--color-background-50);
+  padding: 0.75rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-input);
+  color: var(--color-foreground);
 }
 .code-textarea:focus {
   outline: none;
@@ -511,6 +580,34 @@ body {
   transition: all 0.3s ease;
 }
 
+/* finished animation: bars pulse and change color briefly */
+.visualization-bars.sorted .visual-bar {
+  animation: finishPulse 1.8s ease-in-out both;
+}
+
+@keyframes finishPulse {
+  0% {
+    transform: scaleY(1);
+    filter: none;
+  }
+  25% {
+    transform: scaleY(1.06);
+    filter: hue-rotate(10deg) saturate(1.1);
+  }
+  50% {
+    transform: scaleY(1.02);
+    filter: hue-rotate(-6deg) saturate(1.05);
+  }
+  75% {
+    transform: scaleY(1.04);
+    filter: hue-rotate(6deg) saturate(1.08);
+  }
+  100% {
+    transform: scaleY(1);
+    filter: none;
+  }
+}
+
 .scroll-area {
   position: relative;
   overflow: hidden;
@@ -535,7 +632,7 @@ body {
 .slider {
   position: relative;
   display: flex;
-  width: 100%;
+  width: 8rem; /* default width so the slider is visible */
   align-items: center;
 }
 .slider__track {
@@ -556,8 +653,8 @@ body {
   width: 16px;
   border-radius: 9999px;
   border: 1px solid var(--color-primary-20);
-  background: var(--color-background);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  background: var(--color-card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .btn {
@@ -570,40 +667,92 @@ body {
   font-size: 0.875rem;
   font-weight: 500;
   transition: background-color 0.15s, color 0.15s;
-}
-.btn--default {
-  background: var(--color-primary);
-  color: var(--color-primary-foreground);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-.btn--outline {
-  border: 1px solid var(--color-input);
-  background: var(--color-background);
-}
-.btn--ghost {
-  background: transparent;
-}
-.btn--icon {
-  height: 2.25rem;
-  width: 2.25rem;
-  padding: 0;
-}
-.btn svg {
-  pointer-events: none;
-  height: 1rem;
-  width: 1rem;
-}
+  .btn--default {
+    /* Match visualization background */
+    background: var(--color-background-50);
+    border-radius: 20px;
+    border-color: var(--button-border-hover);
+    color: var(--color-foreground);
+    box-shadow: none;
+  }
+  .btn--outline {
+    border: 1px solid var(--button-border);
+    background: var(--color-card);
+    color: var(--color-foreground);
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease,
+      transform 0.06s ease;
+  }
+  .btn--ghost {
+    background: transparent;
+  }
+  .btn--icon {
+    height: 2.25rem;
+    width: 2.25rem;
+    padding: 0;
+    background: var(--color-card);
+    border: 1px solid var(--button-border);
+    color: var(--color-foreground);
+    cursor: pointer;
+    transition: background-color 0.12s ease, border-color 0.12s ease,
+      transform 0.06s ease;
+  }
 
-/* helpers for icons sizing */
-.h-4 {
-  height: 1rem;
-  width: 1rem;
-}
-.h-5 {
-  height: 1.25rem;
-  width: 1.25rem;
-}
-.h-8 {
-  height: 2rem;
-  width: 2rem;
+  /* Hover / active / focus to match sidebar buttons */
+  .btn--icon:hover,
+  .btn--outline:hover {
+    background: color-mix(
+      in srgb,
+      var(--color-card) 85%,
+      var(--color-background-50) 15%
+    );
+    border-color: var(--button-border-hover);
+  }
+  .btn--icon:active,
+  .btn--outline:active {
+    transform: translateY(1px);
+    background: color-mix(in srgb, var(--color-background-50) 60%, transparent);
+  }
+  .btn--icon:focus,
+  .btn--outline:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  }
+  .btn svg {
+    pointer-events: none;
+    height: 1rem;
+    width: 1rem;
+    color: inherit;
+  }
+
+  /* Make base buttons match visualization background by default */
+  .btn {
+    background: var(--color-background-50);
+    color: var(--color-foreground);
+  }
+
+  .btn:hover {
+    filter: brightness(1.06);
+  }
+
+  /* Make sure form elements use readable colors */
+  button,
+  input,
+  textarea {
+    color: var(--color-foreground);
+  }
+
+  /* helpers for icons sizing */
+  .h-4 {
+    height: 1rem;
+    width: 1rem;
+  }
+  .h-5 {
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+  .h-8 {
+    height: 2rem;
+    width: 2rem;
+  }
 }

@@ -73,6 +73,7 @@ export default function VisualizationArea({
   const [array, setArray] = useState([]);
   const [active, setActive] = useState([]); // indices being compared/highlighted
   const [stepIndex, setStepIndex] = useState(0);
+  const [finished, setFinished] = useState(false);
 
   // initial array (only on reset)
   useEffect(() => {
@@ -91,6 +92,7 @@ export default function VisualizationArea({
     setStepIndex(0);
     setActive([]);
     setArray(sourceArray.slice());
+    setFinished(false);
   }, [algorithm, sourceArray]);
 
   // steps are memoized for current array snapshot and selected algorithm
@@ -130,7 +132,16 @@ export default function VisualizationArea({
       });
       setActive([s.i, s.j]);
     }
-    setStepIndex((idx) => idx + 1);
+    setStepIndex((idx) => {
+      const next = idx + 1;
+      // if we've reached or passed the end, trigger finished animation
+      if (next >= (stepsRef.current ? stepsRef.current.length : 0)) {
+        setFinished(true);
+        // clear finished state after animation (2s)
+        setTimeout(() => setFinished(false), 2000);
+      }
+      return next;
+    });
   };
 
   // handle manual stepTick prop (increments when user clicks step)
@@ -145,7 +156,11 @@ export default function VisualizationArea({
   // autoplay when isPlaying; interval depends on speed
   useEffect(() => {
     if (!isPlaying) return undefined;
-    const intervalMs = Math.max(50, 1000 - speed * 10);
+    // Map speed (0..100) to interval (2000ms slow .. 50ms fast)
+    const intervalMs = Math.max(
+      50,
+      Math.round(2000 - (speed / 100) * (2000 - 50))
+    );
     const id = setInterval(() => {
       doStep();
     }, intervalMs);
@@ -161,7 +176,7 @@ export default function VisualizationArea({
         </p>
       </div>
 
-      <div className="visualization-bars">
+      <div className={"visualization-bars" + (finished ? " sorted" : "")}>
         {array.map((value, idx) => (
           <div
             key={idx}
