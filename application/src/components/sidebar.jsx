@@ -8,7 +8,7 @@ const dataStructures = [
   { name: "Arrays", items: ["Array Traversal", "Array Rotation"] },
   { name: "Linked Lists", items: ["Singly Linked List", "Doubly Linked List"] },
   { name: "Stacks", items: ["Stack Operations", "Expression Evaluation"] },
-  { name: "Queues", items: ["Queue Operations", "Circular Queue"] },
+  { name: "Queues", items: ["Queue Operations"] },
   { name: "Trees", items: ["Binary Tree", "BST", "AVL Tree"] },
   { name: "Graphs", items: ["Graph Representation", "Adjacency List"] },
   { name: "Heaps", items: ["Min Heap", "Max Heap"] },

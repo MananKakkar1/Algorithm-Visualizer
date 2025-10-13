@@ -209,6 +209,30 @@ function generateStackSteps() {
   return steps;
 }
 
+// Queue Operations
+function generateQueueSteps() {
+  const steps = [];
+  const operations = [
+    { type: "enqueue", value: 4 },
+    { type: "enqueue", value: 7 },
+    { type: "dequeue" },
+    { type: "enqueue", value: 2 },
+    { type: "dequeue" },
+  ];
+
+  let queue = [];
+  for (const op of operations) {
+    if (op.type === "enqueue") {
+      queue.push(op.value);
+      steps.push({ queue: [...queue], action: "enqueue" });
+    } else if (op.type === "dequeue" && queue.length > 0) {
+      queue.shift();
+      steps.push({ queue: [...queue], action: "dequeue" });
+    }
+  }
+  return steps;
+}
+
 // Expression Evaluation (Postfix)
 function generateExpressionEvalSteps() {
   const steps = [];
@@ -235,9 +259,7 @@ function generateExpressionEvalSteps() {
   return steps;
 }
 
-/* ---------- Linked Lists (NEW) ---------- */
-
-// just do a simple left-to-right traversal, highlight node index
+/* ---------- Linked Lists ---------- */
 function generateSinglyListSteps(list) {
   return list.map((_, i) => ({ kind: "list-visit", index: i }));
 }
@@ -264,18 +286,18 @@ export default function VisualizationArea({
   const [stepIndex, setStepIndex] = useState(0);
   const [finished, setFinished] = useState(false);
 
-  // linked list state
   const [linkedList, setLinkedList] = useState([]);
   const [activeNode, setActiveNode] = useState(-1);
 
   useEffect(() => {
-    const newArray = Array.from({ length: 20 }, () =>
-      Math.floor(Math.random() * 100) + 10
+    const newArray = Array.from(
+      { length: 20 },
+      () => Math.floor(Math.random() * 100) + 10
     );
     setSourceArray(newArray);
     setArray(newArray.slice());
-    setStack([5]);
-    setLinkedList(newArray.slice(0, 6)); // 6 nodes
+    setStack([]); // FIXED misleading initial value
+    setLinkedList(newArray.slice(0, 6));
     setActiveNode(-1);
     setStepIndex(0);
     setActive([]);
@@ -286,7 +308,7 @@ export default function VisualizationArea({
     setStepIndex(0);
     setActive([]);
     setArray(sourceArray.slice());
-    setStack([5]);
+    setStack([]);
     setLinkedList(sourceArray.slice(0, 6));
     setActiveNode(-1);
     setHighlightAction("");
@@ -295,12 +317,8 @@ export default function VisualizationArea({
 
   const steps = useMemo(() => {
     const algo = (algorithm || "").toLowerCase();
-
-    // linked lists
     if (algo.includes("singly")) return generateSinglyListSteps(linkedList);
     if (algo.includes("doubly")) return generateDoublyListSteps(linkedList);
-
-    // others
     if (algo.includes("quick")) return generateQuickSteps(sourceArray);
     if (algo.includes("merge")) return generateMergeSteps(sourceArray);
     if (algo.includes("heap")) return generateHeapSteps(sourceArray);
@@ -308,8 +326,8 @@ export default function VisualizationArea({
     if (algo.includes("rotation")) return generateArrayRotationSteps(sourceArray);
     if (algo.includes("traversal")) return generateArrayTraversalSteps(sourceArray);
     if (algo.includes("stack")) return generateStackSteps();
+    if (algo.includes("queue")) return generateQueueSteps();
     if (algo.includes("expression")) return generateExpressionEvalSteps();
-
     return [];
   }, [sourceArray, linkedList, algorithm]);
 
@@ -329,18 +347,20 @@ export default function VisualizationArea({
 
     const algo = algorithm.toLowerCase();
 
-    // linked list handling
     if (algo.includes("singly") || algo.includes("doubly")) {
       if (s.kind === "list-visit") setActiveNode(s.index);
     } else if (algo.includes("stack") || algo.includes("expression")) {
       setStack(s.stack || []);
       setHighlightAction(
-        s.action === "push"
-          ? "push"
-          : s.action === "pop"
-          ? "pop"
-          : s.action === "eval"
-          ? "eval"
+        s.action === "push" ? "push" : s.action === "pop" ? "pop" : s.action === "eval" ? "eval" : ""
+      );
+    } else if (algo.includes("queue")) {
+      setStack(s.queue || []);
+      setHighlightAction(
+        s.action === "enqueue"
+          ? "enqueue"
+          : s.action === "dequeue"
+          ? "dequeue"
           : ""
       );
     } else if (s.op === "compare" || s.compare) {
@@ -397,9 +417,9 @@ export default function VisualizationArea({
     algorithm.toLowerCase().includes("stack") ||
     algorithm.toLowerCase().includes("expression");
 
+  const isQueue = algorithm.toLowerCase().includes("queue");
   const isDoubly = algorithm.toLowerCase().includes("doubly");
 
-  // Small SVG arrows
   const ArrowRight = () => (
     <svg width="60" height="14" viewBox="0 0 60 14" style={{ opacity: 0.9 }}>
       <line x1="2" y1="7" x2="54" y2="7" stroke="#5a6ad6" strokeWidth="2" />
@@ -408,11 +428,11 @@ export default function VisualizationArea({
   );
 
   const ArrowBoth = () => (
-    <svg width="80" height="18" viewBox="0 0 80 18" style={{ opacity: 0.9 }}>
-      <line x1="10" y1="6" x2="66" y2="6" stroke="#5a6ad6" strokeWidth="2" />
-      <polygon points="66,1 72,6 66,11" fill="#5a6ad6" />
-      <line x1="70" y1="12" x2="14" y2="12" stroke="#5a6ad6" strokeWidth="2" />
-      <polygon points="14,7 8,12 14,17" fill="#5a6ad6" />
+    <svg width="80" height="22" viewBox="0 0 80 22" style={{ opacity: 0.9 }}>
+      <line x1="10" y1="4" x2="66" y2="4" stroke="#5a6ad6" strokeWidth="2" />
+      <polygon points="66,-1 72,4 66,9" fill="#5a6ad6" />
+      <line x1="70" y1="14" x2="14" y2="14" stroke="#5a6ad6" strokeWidth="2" />
+      <polygon points="14,9 8,14 16,19" fill="#5a6ad6" />
     </svg>
   );
 
@@ -503,7 +523,6 @@ export default function VisualizationArea({
             boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
           }}
         >
-          {/* Tube container */}
           <div
             style={{
               position: "relative",
@@ -511,8 +530,7 @@ export default function VisualizationArea({
               height: "100%",
               border: "3px solid #3b3f63",
               borderRadius: "12px",
-              background:
-                "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
+              background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
               boxShadow: finished
                 ? "0 0 15px rgba(179,154,255,0.6) inset"
                 : "inset 0 0 10px #1c2240",
@@ -547,8 +565,7 @@ export default function VisualizationArea({
                   boxShadow: finished
                     ? "0 0 15px rgba(179,154,255,0.7)"
                     : "0 2px 6px rgba(0,0,0,0.3)",
-                  transition:
-                    "all 0.5s ease, transform 0.4s ease-in-out",
+                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
                 }}
               >
                 {val}
@@ -556,7 +573,6 @@ export default function VisualizationArea({
             ))}
           </div>
 
-          {/* Instruction text */}
           <div
             style={{
               marginLeft: "35px",
@@ -586,7 +602,7 @@ export default function VisualizationArea({
                 transition: "color 0.3s ease",
               }}
             >
-                POP
+              POP
             </div>
             <div
               style={{
@@ -597,6 +613,106 @@ export default function VisualizationArea({
               }}
             >
               EVAL
+            </div>
+          </div>
+        </div>
+      ) : isQueue ? (
+        /* === QUEUE VISUALIZATION === */
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "260px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            transition: "box-shadow 0.5s ease",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              height: "100px",
+              width: "100%",
+              maxWidth: "500px",
+              border: "3px solid #3b3f63",
+              borderRadius: "12px",
+              background: "linear-gradient(90deg, #0d1228 0%, #0b0f20 100%)",
+              boxShadow: finished
+                ? "0 0 15px rgba(179,154,255,0.6) inset"
+                : "inset 0 0 10px #1c2240",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              overflow: "hidden",
+              padding: "0 10px",
+            }}
+          >
+            {stack.map((val, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: "60px",
+                  height: "40px",
+                  marginRight: "8px",
+                  backgroundColor: finished
+                    ? "#c5b3ff"
+                    : idx === 0
+                    ? "#b39aff"
+                    : "#5a3fc0",
+                  border: "1px solid #b39aff",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  color: "white",
+                  transform: finished ? "translateX(6px)" : "translateX(0)",
+                  boxShadow: finished
+                    ? "0 0 15px rgba(179,154,255,0.7)"
+                    : "0 2px 6px rgba(0,0,0,0.3)",
+                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
+                }}
+              >
+                {val}
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
+              marginLeft: "35px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              height: "100%",
+              gap: "10px",
+            }}
+          >
+            <div
+              style={{
+                color: highlightAction === "enqueue" ? "white" : "#666a80",
+                fontWeight: highlightAction === "enqueue" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              ENQUEUE
+            </div>
+            <div
+              style={{
+                color: highlightAction === "dequeue" ? "white" : "#666a80",
+                fontWeight: highlightAction === "dequeue" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              DEQUEUE
             </div>
           </div>
         </div>

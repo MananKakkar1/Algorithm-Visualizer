@@ -111,6 +111,20 @@ def merge(left, right):
 # Example:
 # evaluate(["2", "3", "+", "4", "*"]) -> 20`,
 
+  // NEW: Queue Operations
+  "Queue Operations": `from collections import deque
+
+def queue_operations():
+    q = deque()
+
+    q.append(4)   # enqueue
+    q.append(7)   # enqueue
+    q.popleft()   # dequeue
+    q.append(2)   # enqueue
+    q.popleft()   # dequeue
+
+    return list(q)`,
+
   // NEW: Singly Linked List
   "Singly Linked List": `class Node:
     def __init__(self, data):
@@ -140,7 +154,7 @@ class SinglyLinkedList:
             cur = cur.next
         if not cur:  # not found
             return
-        if prev is None:      # delete head
+        if prev is None:
             self.head = cur.next
         else:
             prev.next = cur.next
@@ -152,7 +166,7 @@ class SinglyLinkedList:
             cur = cur.next
         print()`,
 
-  // NEW: Doubly Linked List
+
   "Doubly Linked List": `class DNode:
     def __init__(self, data):
         self.data = data
@@ -246,7 +260,13 @@ const algoInfo = {
     desc: "Evaluates a postfix expression using a stack by pushing operands and applying operators as they appear.",
   },
 
-  // NEW: Linked lists
+  // NEW: Queues
+  "Queue Operations": {
+    time: "O(1) for enqueue/dequeue",
+    space: "O(n)",
+    desc: "A linear data structure following FIFO (First-In, First-Out). New elements are added at the rear and removed from the front.",
+  },
+
   "Singly Linked List": {
     time: "Traversal O(n), append O(n) (O(1) with tail), delete O(n)",
     space: "O(1) auxiliary",
@@ -274,7 +294,6 @@ export default function CodeViewPanel({ algorithm }) {
         flexDirection: "column",
       }}
     >
-      {/* --- PSEUDOCODE HEADER --- */}
       <CardHeader
         style={{
           borderBottom: "1px solid #1c2333",
@@ -294,7 +313,6 @@ export default function CodeViewPanel({ algorithm }) {
         </CardTitle>
       </CardHeader>
 
-      {/* --- PSEUDOCODE AREA --- */}
       <CardContent
         style={{
           flex: "0 0 auto",
@@ -324,7 +342,6 @@ export default function CodeViewPanel({ algorithm }) {
         </div>
       </CardContent>
 
-      {/* --- DETAILS HEADER --- */}
       <CardHeader
         style={{
           borderBottom: "1px solid #1c2333",
@@ -345,7 +362,6 @@ export default function CodeViewPanel({ algorithm }) {
         </CardTitle>
       </CardHeader>
 
-      {/* --- DETAILS CONTENT --- */}
       <CardContent style={{ flex: "1 1 auto" }}>
         {info ? (
           <div style={{ lineHeight: "1.6" }}>
