@@ -10,7 +10,7 @@ import CodeEditorPanel from "./components/code-editor-panel";
 
 export default function App() {
   const [theme, setTheme] = useState("dark");
-  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Bubble Sort");
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState("Array Traversal");
   const [isPlaying, setIsPlaying] = useState(false);
   const [speed, setSpeed] = useState(50);
   const [stepTick, setStepTick] = useState(0);
