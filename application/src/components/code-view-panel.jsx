@@ -327,7 +327,12 @@ def insert(root, key):
         root.right = rotate_right(root.right)
         return rotate_left(root)
 
-    return root`
+    return root`,
+    "Linear Search": `def linear_search(arr, x):
+        for item in arr:
+            if item == x:
+                return True
+        return False`,
 };
 
 /** ------------------------------------------------------------------
@@ -424,7 +429,12 @@ const algoInfo = {
     space: "O(log n) due to recursion / path updates",
     desc:
       "A self-balancing BST that maintains a height balance factor ∈ {−1,0,1} at every node using rotations (LL, RR, LR, RL). Guarantees logarithmic height; the visualization steps through inserts and rotations."
-  }
+  },
+  "Linear Search": {
+    time: "O(n)",
+    space: "O(1)",
+    desc: "A search algorithm that iterates through the entire array in the worst case to search for one element.",
+  },
 };
 
 /** ------------------------------------------------------------------

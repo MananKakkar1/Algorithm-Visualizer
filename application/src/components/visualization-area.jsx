@@ -169,6 +169,17 @@ function generateArrayTraversalSteps(arr) {
   return steps;
 }
 
+function generateLinearSearchSteps(arr, x) {
+  const steps = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === x) {
+      break;
+    }
+    steps.push({ i, j: null, compare: true, swapped: false });
+  }
+  return steps;
+}
+
 function generateArrayRotationSteps(arr, k = 1) {
   const steps = [];
   const n = arr.length;
@@ -465,6 +476,8 @@ export default function VisualizationArea({
     if (algo.includes("stack")) return generateStackSteps();
     if (algo.includes("queue")) return generateQueueSteps();
     if (algo.includes("expression")) return generateExpressionEvalSteps();
+    if (algo.includes("linear"))
+      return generateLinearSearchSteps(sourceArray, sourceArray[6]);
 
     // Trees: use precomputed steps from the dedicated effect
     if (algo.includes("tree") || algo.includes("bst") || algo.includes("avl")) {
@@ -701,296 +714,297 @@ export default function VisualizationArea({
             </div>
           ))}
         </div>
-      ) : isLinkedList ? ( /* === LINKED LIST VISUALIZATION === */
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          height: "260px",
-          backgroundColor: "#111830",
-          borderRadius: "8px",
-          padding: "10px 20px",
-          boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
-          transition: "box-shadow 0.5s ease",
-        }}
-      >
-        {linkedList.map((val, idx) => (
-          <div key={idx} style={{ display: "flex", alignItems: "center" }}>
-            <div
-              style={{
-                minWidth: 70,
-                height: 46,
-                padding: "0 12px",
-                backgroundColor: finished
-                  ? "#c5b3ff"
-                  : idx === activeNode
-                  ? "#b39aff"
-                  : "#5a3fc0",
-                border: "1px solid #b39aff",
-                borderRadius: "10px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: 700,
-                color: "white",
-                boxShadow: finished
-                  ? "0 0 14px rgba(179,154,255,0.65)"
-                  : "0 2px 6px rgba(0,0,0,0.35)",
-                transition: "all 0.35s ease",
-              }}
-            >
-              {val}
-            </div>
-
-            {idx < linkedList.length - 1 && (
-              <div style={{ margin: "0 8px" }}>
-                {isDoubly ? <ArrowBoth /> : <ArrowRight />}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      ) : isStack ? ( /* === STACK VISUALIZATION === */
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "260px",
-          backgroundColor: "#111830",
-          borderRadius: "8px",
-          padding: "10px 20px",
-          transition: "box-shadow 0.5s ease",
-          boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
-        }}
-      >
+      ) : isLinkedList /* === LINKED LIST VISUALIZATION === */ ? (
         <div
           style={{
-            position: "relative",
-            width: "140px",
-            height: "100%",
-            border: "3px solid #3b3f63",
-            borderRadius: "12px",
-            background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
-            boxShadow: finished
-              ? "0 0 15px rgba(179,154,255,0.6) inset"
-              : "inset 0 0 10px #1c2240",
             display: "flex",
-            flexDirection: "column-reverse",
             alignItems: "center",
-            justifyContent: "flex-start",
-            overflow: "hidden",
+            justifyContent: "center",
+            gap: "10px",
+            height: "260px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
             transition: "box-shadow 0.5s ease",
           }}
         >
-          {stack.map((val, idx) => (
-            <div
-              key={idx}
-              style={{
-                width: "100px",
-                height: "40px",
-                marginBottom: "8px",
-                backgroundColor: finished
-                  ? "#c5b3ff"
-                  : idx === stack.length - 1
-                  ? "#b39aff"
-                  : "#5a3fc0",
-                border: "1px solid #b39aff",
-                borderRadius: "6px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "600",
-                color: "white",
-                transform: finished ? "translateY(-6px)" : "translateY(0)",
-                boxShadow: finished
-                  ? "0 0 15px rgba(179,154,255,0.7)"
-                  : "0 2px 6px rgba(0,0,0,0.3)",
-                transition: "all 0.5s ease, transform 0.4s ease-in-out",
-              }}
-            >
-              {val}
+          {linkedList.map((val, idx) => (
+            <div key={idx} style={{ display: "flex", alignItems: "center" }}>
+              <div
+                style={{
+                  minWidth: 70,
+                  height: 46,
+                  padding: "0 12px",
+                  backgroundColor: finished
+                    ? "#c5b3ff"
+                    : idx === activeNode
+                    ? "#b39aff"
+                    : "#5a3fc0",
+                  border: "1px solid #b39aff",
+                  borderRadius: "10px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 700,
+                  color: "white",
+                  boxShadow: finished
+                    ? "0 0 14px rgba(179,154,255,0.65)"
+                    : "0 2px 6px rgba(0,0,0,0.35)",
+                  transition: "all 0.35s ease",
+                }}
+              >
+                {val}
+              </div>
+
+              {idx < linkedList.length - 1 && (
+                <div style={{ margin: "0 8px" }}>
+                  {isDoubly ? <ArrowBoth /> : <ArrowRight />}
+                </div>
+              )}
             </div>
           ))}
         </div>
-
+      ) : isStack /* === STACK VISUALIZATION === */ ? (
         <div
           style={{
-            marginLeft: "35px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            height: "100%",
-            gap: "10px",
-          }}
-        >
-          <div
-            style={{
-              color: highlightAction === "push" ? "white" : "#666a80",
-              fontWeight: highlightAction === "push" ? "600" : "400",
-              fontSize: "15px",
-              transition: "color 0.3s ease",
-            }}
-          >
-            PUSH
-          </div>
-          <div
-            style={{
-              color: highlightAction === "pop" ? "white" : "#666a80",
-              fontWeight: highlightAction === "pop" ? "600" : "400",
-              fontSize: "15px",
-              transition: "color 0.3s ease",
-            }}
-          >
-            POP
-          </div>
-          <div
-            style={{
-              color: highlightAction === "eval" ? "white" : "#666a80",
-              fontWeight: highlightAction === "eval" ? "600" : "400",
-              fontSize: "15px",
-              transition: "color 0.3s ease",
-            }}
-          >
-            EVAL
-          </div>
-        </div>
-      </div>
-      ) : isQueue ? ( /* === QUEUE VISUALIZATION === */
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          height: "260px",
-          backgroundColor: "#111830",
-          borderRadius: "8px",
-          padding: "10px 20px",
-          transition: "box-shadow 0.5s ease",
-          boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
-        }}
-      >
-        <div
-          style={{
-            position: "relative",
-            height: "100px",
-            width: "100%",
-            maxWidth: "500px",
-            border: "3px solid #3b3f63",
-            borderRadius: "12px",
-            background: "linear-gradient(90deg, #0d1228 0%, #0b0f20 100%)",
-            boxShadow: finished
-              ? "0 0 15px rgba(179,154,255,0.6) inset"
-              : "inset 0 0 10px #1c2240",
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
-            justifyContent: "flex-start",
-            overflow: "hidden",
-            padding: "0 10px",
+            justifyContent: "center",
+            height: "260px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            transition: "box-shadow 0.5s ease",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
           }}
         >
-          {stack.map((val, idx) => (
+          <div
+            style={{
+              position: "relative",
+              width: "140px",
+              height: "100%",
+              border: "3px solid #3b3f63",
+              borderRadius: "12px",
+              background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
+              boxShadow: finished
+                ? "0 0 15px rgba(179,154,255,0.6) inset"
+                : "inset 0 0 10px #1c2240",
+              display: "flex",
+              flexDirection: "column-reverse",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              overflow: "hidden",
+              transition: "box-shadow 0.5s ease",
+            }}
+          >
+            {stack.map((val, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: "100px",
+                  height: "40px",
+                  marginBottom: "8px",
+                  backgroundColor: finished
+                    ? "#c5b3ff"
+                    : idx === stack.length - 1
+                    ? "#b39aff"
+                    : "#5a3fc0",
+                  border: "1px solid #b39aff",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  color: "white",
+                  transform: finished ? "translateY(-6px)" : "translateY(0)",
+                  boxShadow: finished
+                    ? "0 0 15px rgba(179,154,255,0.7)"
+                    : "0 2px 6px rgba(0,0,0,0.3)",
+                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
+                }}
+              >
+                {val}
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
+              marginLeft: "35px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              height: "100%",
+              gap: "10px",
+            }}
+          >
+            <div
+              style={{
+                color: highlightAction === "push" ? "white" : "#666a80",
+                fontWeight: highlightAction === "push" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              PUSH
+            </div>
+            <div
+              style={{
+                color: highlightAction === "pop" ? "white" : "#666a80",
+                fontWeight: highlightAction === "pop" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              POP
+            </div>
+            <div
+              style={{
+                color: highlightAction === "eval" ? "white" : "#666a80",
+                fontWeight: highlightAction === "eval" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              EVAL
+            </div>
+          </div>
+        </div>
+      ) : isQueue /* === QUEUE VISUALIZATION === */ ? (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "center",
+            height: "260px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 20px",
+            transition: "box-shadow 0.5s ease",
+            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              height: "100px",
+              width: "100%",
+              maxWidth: "500px",
+              border: "3px solid #3b3f63",
+              borderRadius: "12px",
+              background: "linear-gradient(90deg, #0d1228 0%, #0b0f20 100%)",
+              boxShadow: finished
+                ? "0 0 15px rgba(179,154,255,0.6) inset"
+                : "inset 0 0 10px #1c2240",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "flex-start",
+              overflow: "hidden",
+              padding: "0 10px",
+            }}
+          >
+            {stack.map((val, idx) => (
+              <div
+                key={idx}
+                style={{
+                  width: "60px",
+                  height: "40px",
+                  marginRight: "8px",
+                  backgroundColor: finished
+                    ? "#c5b3ff"
+                    : idx === 0
+                    ? "#b39aff"
+                    : "#5a3fc0",
+                  border: "1px solid #b39aff",
+                  borderRadius: "6px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  color: "white",
+                  transform: finished ? "translateX(6px)" : "translateX(0)",
+                  boxShadow: finished
+                    ? "0 0 15px rgba(179,154,255,0.7)"
+                    : "0 2px 6px rgba(0,0,0,0.3)",
+                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
+                }}
+              >
+                {val}
+              </div>
+            ))}
+          </div>
+
+          <div
+            style={{
+              marginLeft: "35px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+              alignItems: "flex-start",
+              height: "100%",
+              gap: "10px",
+            }}
+          >
+            <div
+              style={{
+                color: highlightAction === "enqueue" ? "white" : "#666a80",
+                fontWeight: highlightAction === "enqueue" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              ENQUEUE
+            </div>
+            <div
+              style={{
+                color: highlightAction === "dequeue" ? "white" : "#666a80",
+                fontWeight: highlightAction === "dequeue" ? "600" : "400",
+                fontSize: "15px",
+                transition: "color 0.3s ease",
+              }}
+            >
+              DEQUEUE
+            </div>
+          </div>
+        </div>
+      ) : (
+        // === DEFAULT BAR VISUALIZATION ===
+        <div
+          className={"visualization-bars" + (finished ? " sorted" : "")}
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+            height: "220px",
+            backgroundColor: "#111830",
+            borderRadius: "8px",
+            padding: "10px 6px",
+            overflow: "hidden",
+          }}
+        >
+          {array.map((value, idx) => (
             <div
               key={idx}
               style={{
-                width: "60px",
-                height: "40px",
-                marginRight: "8px",
-                backgroundColor: finished
-                  ? "#c5b3ff"
-                  : idx === 0
+                flex: 1,
+                margin: "0 1px",
+                borderRadius: "3px 3px 0 0",
+                height: `${value * 1.75}px`,
+                backgroundColor: active.includes(idx)
+                  ? "#ff4d6d"
+                  : finished
                   ? "#b39aff"
                   : "#5a3fc0",
-                border: "1px solid #b39aff",
-                borderRadius: "6px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontWeight: "600",
-                color: "white",
-                transform: finished ? "translateX(6px)" : "translateX(0)",
-                boxShadow: finished
-                  ? "0 0 15px rgba(179,154,255,0.7)"
-                  : "0 2px 6px rgba(0,0,0,0.3)",
-                transition: "all 0.5s ease, transform 0.4s ease-in-out",
+                transition: "height 0.2s, background-color 0.4s",
               }}
-            >
-              {val}
-            </div>
+            />
           ))}
         </div>
-
-        <div
-          style={{
-            marginLeft: "35px",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "flex-start",
-            height: "100%",
-            gap: "10px",
-          }}
-        >
-          <div
-            style={{
-              color: highlightAction === "enqueue" ? "white" : "#666a80",
-              fontWeight: highlightAction === "enqueue" ? "600" : "400",
-              fontSize: "15px",
-              transition: "color 0.3s ease",
-            }}
-          >
-            ENQUEUE
-          </div>
-          <div
-            style={{
-              color: highlightAction === "dequeue" ? "white" : "#666a80",
-              fontWeight: highlightAction === "dequeue" ? "600" : "400",
-              fontSize: "15px",
-              transition: "color 0.3s ease",
-            }}
-          >
-            DEQUEUE
-          </div>
-        </div>
-      </div>
-      ) : ( // === DEFAULT BAR VISUALIZATION ===
-      <div
-        className={"visualization-bars" + (finished ? " sorted" : "")}
-        style={{
-          display: "flex",
-          alignItems: "flex-end",
-          justifyContent: "center",
-          height: "220px",
-          backgroundColor: "#111830",
-          borderRadius: "8px",
-          padding: "10px 6px",
-          overflow: "hidden",
-        }}
-      >
-        {array.map((value, idx) => (
-          <div
-            key={idx}
-            style={{
-              flex: 1,
-              margin: "0 1px",
-              borderRadius: "3px 3px 0 0",
-              height: `${value * 1.75}px`,
-              backgroundColor: active.includes(idx)
-                ? "#ff4d6d"
-                : finished
-                ? "#b39aff"
-                : "#5a3fc0",
-              transition: "height 0.2s, background-color 0.4s",
-            }}
-          />
-        ))}
-      </div>
       )}
     </Card>
   );
