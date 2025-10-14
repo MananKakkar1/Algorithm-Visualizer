@@ -386,27 +386,166 @@ function generateBinarySearchSteps(arr, target) {
 
 function generateBSTSteps() {
   const values = [50, 30, 70, 20, 40, 60, 80];
-  const steps = [];
   let id = 0;
 
   function insertNode(root, val) {
     if (!root) return { id: id++, value: val, left: null, right: null };
-    steps.push({ highlightId: root.id });
     if (val < root.value) root.left = insertNode(root.left, val);
     else root.right = insertNode(root.right, val);
     return root;
   }
 
   let root = null;
-  for (let v of values) {
-    root = insertNode(root, v);
+  for (const v of values) root = insertNode(root, v);
+
+  const steps = [];
+  function inorder(node) {
+    if (!node) return;
+    inorder(node.left);
+    steps.push({ highlightId: node.id });
+    inorder(node.right);
   }
+
+  inorder(root);
   return { tree: root, steps };
 }
 
+
 function generateAVLSteps() {
-  return generateBSTSteps(); // simplified for now
+  const values = [50, 30, 70, 20, 40, 60, 80]; // You can customize later
+  let id = 0;
+  const steps = [];
+
+  function height(node) {
+    return node ? node.height : 0;
+  }
+
+  function updateHeight(node) {
+    node.height = 1 + Math.max(height(node.left), height(node.right));
+  }
+
+  function getBalance(node) {
+    return node ? height(node.left) - height(node.right) : 0;
+  }
+
+  function rotateRight(y) {
+    const x = y.left;
+    const T2 = x.right;
+    steps.push({ type: "rotate-start", direction: "right", highlightId: y.id });
+
+    x.right = y;
+    y.left = T2;
+
+    updateHeight(y);
+    updateHeight(x);
+
+    steps.push({ type: "rotate-end", direction: "right", highlightId: x.id });
+    return x;
+  }
+
+  function rotateLeft(x) {
+    const y = x.right;
+    const T2 = y.left;
+    steps.push({ type: "rotate-start", direction: "left", highlightId: x.id });
+
+    y.left = x;
+    x.right = T2;
+
+    updateHeight(x);
+    updateHeight(y);
+
+    steps.push({ type: "rotate-end", direction: "left", highlightId: y.id });
+    return y;
+  }
+
+  function insertNode(root, val) {
+    if (!root) {
+      const newNode = { id: id++, value: val, left: null, right: null, height: 1 };
+      steps.push({ type: "insert", highlightId: newNode.id, insertedValue: val });
+      return newNode;
+    }
+
+    steps.push({ type: "traverse", highlightId: root.id });
+
+    if (val < root.value) root.left = insertNode(root.left, val);
+    else root.right = insertNode(root.right, val);
+
+    updateHeight(root);
+    const balance = getBalance(root);
+    steps.push({ type: "balance-check", highlightId: root.id, balanceFactor: balance });
+
+    if (balance > 1 && val < root.left.value) return rotateRight(root);
+    if (balance < -1 && val > root.right.value) return rotateLeft(root);
+    if (balance > 1 && val > root.left.value) {
+      root.left = rotateLeft(root.left);
+      return rotateRight(root);
+    }
+    if (balance < -1 && val < root.right.value) {
+      root.right = rotateRight(root.right);
+      return rotateLeft(root);
+    }
+
+    return root;
+  }
+
+  let root = null;
+  for (const v of values) {
+    steps.push({ type: "start-insertion", value: v });
+    root = insertNode(root, v);
+    steps.push({ type: "insertion-complete", value: v });
+  }
+
+  return { tree: null, steps };
 }
+
+
+function avlInsert(root, val) {
+  function height(n) { return n ? n.height : 0; }
+  function updateHeight(n) { n.height = 1 + Math.max(height(n.left), height(n.right)); }
+  function getBalance(n) { return n ? height(n.left) - height(n.right) : 0; }
+
+  function rotateRight(y) {
+    const x = y.left;
+    const T2 = x.right;
+    x.right = y;
+    y.left = T2;
+    updateHeight(y);
+    updateHeight(x);
+    return x;
+  }
+
+  function rotateLeft(x) {
+    const y = x.right;
+    const T2 = y.left;
+    y.left = x;
+    x.right = T2;
+    updateHeight(x);
+    updateHeight(y);
+    return y;
+  }
+
+  if (!root) return { id: Math.random(), value: val, height: 1, left: null, right: null };
+
+  if (val < root.value) root.left = avlInsert(root.left, val);
+  else root.right = avlInsert(root.right, val);
+
+  updateHeight(root);
+  const balance = getBalance(root);
+
+  if (balance > 1 && val < root.left.value) return rotateRight(root);
+  if (balance < -1 && val > root.right.value) return rotateLeft(root);
+  if (balance > 1 && val > root.left.value) {
+    root.left = rotateLeft(root.left);
+    return rotateRight(root);
+  }
+  if (balance < -1 && val < root.right.value) {
+    root.right = rotateRight(root.right);
+    return rotateLeft(root);
+  }
+  return root;
+}
+
+
 
 function computeTreeLayout(root, containerWidth) {
   if (!root) return [];
@@ -454,6 +593,8 @@ export default function VisualizationArea({
   stepTick = 0,
   resetTick = 0,
 }) {
+  const [treeRoot, setTreeRoot] = useState(null);
+  const treeRootRef = useRef(null);
   const treeContainerRef = useRef(null);
   const [sourceArray, setSourceArray] = useState([]);
   const [array, setArray] = useState([]);
@@ -469,6 +610,10 @@ export default function VisualizationArea({
   const [treeNodes, setTreeNodes] = useState([]);
   const [highlightId, setHighlightId] = useState(null);
   const [treeSteps, setTreeSteps] = useState([]);
+
+  useEffect(() => {
+    treeRootRef.current = treeRoot;
+  }, [treeRoot]);
 
   useEffect(() => {
     const newArray = Array.from(
@@ -495,7 +640,7 @@ export default function VisualizationArea({
 
     if (algo.includes("binary search")) {
       // Use a sorted array for the bars when doing Binary Search
-      const temp = Array.from({ length: 20 }, (_, i) => i + (i+1)*5);
+      const temp = Array.from({ length: 20 }, (_, i) => i + (i + 1) * 5);
       setArray(temp);
       // Optional: also reflect it in sourceArray if you want everything else to "know" about it
       // setSourceArray(temp);
@@ -508,13 +653,13 @@ export default function VisualizationArea({
     setActiveNode(-1);
     setHighlightAction("");
     setTreeNodes([]);
+    setTreeRoot(null);
     setHighlightId(null);
     setFinished(false);
   }, [algorithm, sourceArray]);
 
   useEffect(() => {
     const algo = (algorithm || "").toLowerCase();
-
     const isTreeAlgo =
       algo.includes("tree") || algo.includes("bst") || algo.includes("avl");
 
@@ -533,8 +678,9 @@ export default function VisualizationArea({
       ({ tree, steps: tSteps } = generateBinaryTreeSteps());
     } else if (algo.includes("bst")) {
       ({ tree, steps: tSteps } = generateBSTSteps());
-    } else {
+    } else if (algo.includes("avl")) {
       ({ tree, steps: tSteps } = generateAVLSteps());
+      setTreeRoot(null);  // ⬅ important for AVL
     }
 
     const layout = computeTreeLayout(tree, containerWidth);
@@ -542,6 +688,7 @@ export default function VisualizationArea({
     setTreeSteps(tSteps);
     setHighlightId(null);
   }, [algorithm, sourceArray]);
+
 
   const steps = useMemo(() => {
     const algo = (algorithm || "").toLowerCase();
@@ -568,7 +715,6 @@ export default function VisualizationArea({
       const temp = Array.from({ length: 20 }, (_, i) => i + 1);
       return generateBinarySearchSteps(temp, 9);
     }
-
     // Trees: use precomputed steps from the dedicated effect
     if (algo.includes("tree") || algo.includes("bst") || algo.includes("avl")) {
       return treeSteps;
@@ -601,10 +747,10 @@ export default function VisualizationArea({
         s.action === "push"
           ? "push"
           : s.action === "pop"
-          ? "pop"
-          : s.action === "eval"
-          ? "eval"
-          : ""
+            ? "pop"
+            : s.action === "eval"
+              ? "eval"
+              : ""
       );
     } else if (algo.includes("queue")) {
       setStack(s.queue || []);
@@ -612,13 +758,25 @@ export default function VisualizationArea({
         s.action === "enqueue"
           ? "enqueue"
           : s.action === "dequeue"
-          ? "dequeue"
-          : ""
+            ? "dequeue"
+            : ""
       );
+    } else if (algo.includes("avl")) {
+      if (s.type === "insert") {
+        const updatedRoot = avlInsert(treeRootRef.current, s.insertedValue);
+        setTreeRoot(updatedRoot);
+        const container = treeContainerRef.current;
+        const containerWidth = Math.max(300, container?.clientWidth || 600);
+        setTreeNodes(computeTreeLayout(updatedRoot, containerWidth));
+      } else if (s.type === "rotate-start" || s.type === "rotate-end" || s.type === "balance-check") {
+        // optional: highlight node during rotation / balance check
+        setHighlightId(s.highlightId);
+      } else {
+        setHighlightId(s.highlightId);
+      }
     } else if (
       algo.includes("tree") ||
-      algo.includes("bst") ||
-      algo.includes("avl")
+      algo.includes("bst")
     ) {
       setHighlightId(s.highlightId);
     } else if (s.op === "compare" || s.compare) {
@@ -832,8 +990,8 @@ export default function VisualizationArea({
                   backgroundColor: finished
                     ? "#c5b3ff"
                     : idx === activeNode
-                    ? "#b39aff"
-                    : "#5a3fc0",
+                      ? "#b39aff"
+                      : "#5a3fc0",
                   border: "1px solid #b39aff",
                   borderRadius: "10px",
                   display: "flex",
@@ -902,8 +1060,8 @@ export default function VisualizationArea({
                   backgroundColor: finished
                     ? "#c5b3ff"
                     : idx === stack.length - 1
-                    ? "#b39aff"
-                    : "#5a3fc0",
+                      ? "#b39aff"
+                      : "#5a3fc0",
                   border: "1px solid #b39aff",
                   borderRadius: "6px",
                   display: "flex",
@@ -1011,8 +1169,8 @@ export default function VisualizationArea({
                   backgroundColor: finished
                     ? "#c5b3ff"
                     : idx === 0
-                    ? "#b39aff"
-                    : "#5a3fc0",
+                      ? "#b39aff"
+                      : "#5a3fc0",
                   border: "1px solid #b39aff",
                   borderRadius: "6px",
                   display: "flex",
@@ -1091,8 +1249,8 @@ export default function VisualizationArea({
                 backgroundColor: active.includes(idx)
                   ? "#ff4d6d"
                   : finished
-                  ? "#b39aff"
-                  : "#5a3fc0",
+                    ? "#b39aff"
+                    : "#5a3fc0",
                 transition: "height 0.2s, background-color 0.4s",
               }}
             />
