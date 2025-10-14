@@ -267,6 +267,100 @@ function generateDoublyListSteps(list) {
   return list.map((_, i) => ({ kind: "list-visit", index: i }));
 }
 
+/* ---------- Trees ---------- */
+function buildSampleTree() {
+  return {
+    id: 0,
+    value: 50,
+    left: {
+      id: 1,
+      value: 30,
+      left: { id: 3, value: 20, left: null, right: null },
+      right: { id: 4, value: 40, left: null, right: null },
+    },
+    right: {
+      id: 2,
+      value: 70,
+      left: { id: 5, value: 60, left: null, right: null },
+      right: { id: 6, value: 80, left: null, right: null },
+    },
+  };
+}
+
+function generateBinaryTreeSteps() {
+  const steps = [];
+  const root = buildSampleTree();
+  const queue = [root];
+
+  while (queue.length > 0) {
+    const node = queue.shift();
+    steps.push({ highlightId: node.id });
+    if (node.left) queue.push(node.left);
+    if (node.right) queue.push(node.right);
+  }
+
+  return { tree: root, steps };
+}
+
+function generateBSTSteps() {
+  const values = [50, 30, 70, 20, 40, 60, 80];
+  const steps = [];
+  let id = 0;
+
+  function insertNode(root, val) {
+    if (!root) return { id: id++, value: val, left: null, right: null };
+    steps.push({ highlightId: root.id });
+    if (val < root.value) root.left = insertNode(root.left, val);
+    else root.right = insertNode(root.right, val);
+    return root;
+  }
+
+  let root = null;
+  for (let v of values) {
+    root = insertNode(root, v);
+  }
+  return { tree: root, steps };
+}
+
+function generateAVLSteps() {
+  return generateBSTSteps(); // simplified for now
+}
+
+function computeTreeLayout(root, containerWidth) {
+  if (!root) return [];
+
+  const levels = [];
+  function traverse(node, depth, pos) {
+    if (!node) return;
+    if (!levels[depth]) levels[depth] = [];
+    levels[depth].push(node);
+    node.depth = depth;
+    node.pos = pos;
+    traverse(node.left, depth + 1, pos * 2);
+    traverse(node.right, depth + 1, pos * 2 + 1);
+  }
+  traverse(root, 0, 0);
+
+  const nodeWidth = 80;
+  const verticalSpacing = 100;
+  const maxNodes = Math.pow(2, levels.length - 1);
+  const totalWidth = maxNodes * nodeWidth;
+  const offsetX = containerWidth / 2;
+
+  const nodes = [];
+  for (const level of levels) {
+    for (const node of level) {
+      const offset = Math.pow(2, levels.length - node.depth - 1);
+      const x = node.pos * nodeWidth * offset + (offset * nodeWidth) / 2;
+      const y = node.depth * verticalSpacing;
+      node.x = x - totalWidth / 2 + offsetX;
+      node.y = y + 20;
+      nodes.push(node);
+    }
+  }
+  return nodes;
+}
+
 /* ================================
    VISUALIZATION COMPONENT
 ==================================*/
@@ -278,6 +372,7 @@ export default function VisualizationArea({
   stepTick = 0,
   resetTick = 0,
 }) {
+  const treeContainerRef = useRef(null);
   const [sourceArray, setSourceArray] = useState([]);
   const [array, setArray] = useState([]);
   const [active, setActive] = useState([]);
@@ -289,6 +384,10 @@ export default function VisualizationArea({
   const [linkedList, setLinkedList] = useState([]);
   const [activeNode, setActiveNode] = useState(-1);
 
+  const [treeNodes, setTreeNodes] = useState([]);
+  const [highlightId, setHighlightId] = useState(null);
+  const [treeSteps, setTreeSteps] = useState([]);
+
   useEffect(() => {
     const newArray = Array.from(
       { length: 20 },
@@ -296,9 +395,11 @@ export default function VisualizationArea({
     );
     setSourceArray(newArray);
     setArray(newArray.slice());
-    setStack([]); // FIXED misleading initial value
+    setStack([]);
     setLinkedList(newArray.slice(0, 6));
     setActiveNode(-1);
+    setTreeNodes([]);
+    setHighlightId(null);
     setStepIndex(0);
     setActive([]);
     setHighlightAction("");
@@ -312,24 +413,66 @@ export default function VisualizationArea({
     setLinkedList(sourceArray.slice(0, 6));
     setActiveNode(-1);
     setHighlightAction("");
+    setTreeNodes([]);
+    setHighlightId(null);
     setFinished(false);
+  }, [algorithm, sourceArray]);
+
+  useEffect(() => {
+    const algo = (algorithm || "").toLowerCase();
+
+    const isTreeAlgo =
+      algo.includes("tree") || algo.includes("bst") || algo.includes("avl");
+
+    if (!isTreeAlgo) {
+      setTreeNodes([]);
+      setTreeSteps([]);
+      setHighlightId(null);
+      return;
+    }
+
+    const container = treeContainerRef.current;
+    const containerWidth = Math.max(300, container?.clientWidth || 600);
+
+    let tree, tSteps;
+    if (algo.includes("binary tree")) {
+      ({ tree, steps: tSteps } = generateBinaryTreeSteps());
+    } else if (algo.includes("bst")) {
+      ({ tree, steps: tSteps } = generateBSTSteps());
+    } else {
+      ({ tree, steps: tSteps } = generateAVLSteps());
+    }
+
+    const layout = computeTreeLayout(tree, containerWidth);
+    setTreeNodes(layout);
+    setTreeSteps(tSteps);
+    setHighlightId(null);
   }, [algorithm, sourceArray]);
 
   const steps = useMemo(() => {
     const algo = (algorithm || "").toLowerCase();
+
     if (algo.includes("singly")) return generateSinglyListSteps(linkedList);
     if (algo.includes("doubly")) return generateDoublyListSteps(linkedList);
     if (algo.includes("quick")) return generateQuickSteps(sourceArray);
     if (algo.includes("merge")) return generateMergeSteps(sourceArray);
     if (algo.includes("heap")) return generateHeapSteps(sourceArray);
     if (algo.includes("bubble")) return generateBubbleSteps(sourceArray);
-    if (algo.includes("rotation")) return generateArrayRotationSteps(sourceArray);
-    if (algo.includes("traversal")) return generateArrayTraversalSteps(sourceArray);
+    if (algo.includes("rotation"))
+      return generateArrayRotationSteps(sourceArray);
+    if (algo.includes("traversal"))
+      return generateArrayTraversalSteps(sourceArray);
     if (algo.includes("stack")) return generateStackSteps();
     if (algo.includes("queue")) return generateQueueSteps();
     if (algo.includes("expression")) return generateExpressionEvalSteps();
+
+    // Trees: use precomputed steps from the dedicated effect
+    if (algo.includes("tree") || algo.includes("bst") || algo.includes("avl")) {
+      return treeSteps;
+    }
+
     return [];
-  }, [sourceArray, linkedList, algorithm]);
+  }, [sourceArray, linkedList, algorithm, treeSteps]);
 
   const stepsRef = useRef(steps);
   useEffect(() => {
@@ -352,7 +495,13 @@ export default function VisualizationArea({
     } else if (algo.includes("stack") || algo.includes("expression")) {
       setStack(s.stack || []);
       setHighlightAction(
-        s.action === "push" ? "push" : s.action === "pop" ? "pop" : s.action === "eval" ? "eval" : ""
+        s.action === "push"
+          ? "push"
+          : s.action === "pop"
+          ? "pop"
+          : s.action === "eval"
+          ? "eval"
+          : ""
       );
     } else if (algo.includes("queue")) {
       setStack(s.queue || []);
@@ -363,6 +512,12 @@ export default function VisualizationArea({
           ? "dequeue"
           : ""
       );
+    } else if (
+      algo.includes("tree") ||
+      algo.includes("bst") ||
+      algo.includes("avl")
+    ) {
+      setHighlightId(s.highlightId);
     } else if (s.op === "compare" || s.compare) {
       setActive([s.a ?? s.i, s.b ?? s.j].filter(Boolean));
     } else if (s.op === "swap" || s.swapped) {
@@ -407,6 +562,11 @@ export default function VisualizationArea({
     );
     return () => clearInterval(interval);
   }, [isPlaying, speed]);
+
+  const isTree =
+    algorithm.toLowerCase().includes("tree") ||
+    algorithm.toLowerCase().includes("bst") ||
+    algorithm.toLowerCase().includes("avl");
 
   const isLinkedList =
     algorithm.toLowerCase().includes("linked") ||
@@ -454,301 +614,383 @@ export default function VisualizationArea({
           Visualizing algorithm execution
         </p>
       </div>
-
-      {/* === LINKED LIST VISUALIZATION === */}
-      {isLinkedList ? (
+      {/* === TREE VISUALIZATION === */}
+      {isTree ? (
         <div
+          id="tree-container"
+          ref={treeContainerRef}
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "10px",
-            height: "260px",
+            position: "relative",
+            height: "280px",
             backgroundColor: "#111830",
             borderRadius: "8px",
-            padding: "10px 20px",
-            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
-            transition: "box-shadow 0.5s ease",
+            overflow: "hidden",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
           }}
         >
-          {linkedList.map((val, idx) => (
-            <div key={idx} style={{ display: "flex", alignItems: "center" }}>
-              <div
-                style={{
-                  minWidth: 70,
-                  height: 46,
-                  padding: "0 12px",
-                  backgroundColor: finished
-                    ? "#c5b3ff"
-                    : idx === activeNode
-                    ? "#b39aff"
-                    : "#5a3fc0",
-                  border: "1px solid #b39aff",
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  color: "white",
-                  boxShadow: finished
-                    ? "0 0 14px rgba(179,154,255,0.65)"
-                    : "0 2px 6px rgba(0,0,0,0.35)",
-                  transition: "all 0.35s ease",
-                }}
-              >
-                {val}
-              </div>
+          <svg
+            style={{
+              position: "absolute",
+              left: 0,
+              top: 0,
+              width: "100%",
+              height: "100%",
+              pointerEvents: "none",
+            }}
+          >
+            {treeNodes.map((node) => (
+              <g key={`edges-${node.id}`}>
+                {node.left &&
+                  Number.isFinite(node.x) &&
+                  Number.isFinite(node.left.x) && (
+                    <line
+                      x1={node.x}
+                      y1={node.y + 30} // parent center
+                      x2={node.left.x}
+                      y2={node.left.y + 30} // child center
+                      stroke="#5a6ad6"
+                      strokeWidth="2"
+                    />
+                  )}
+                {node.right &&
+                  Number.isFinite(node.x) &&
+                  Number.isFinite(node.right.x) && (
+                    <line
+                      x1={node.x}
+                      y1={node.y + 30} // parent center
+                      x2={node.right.x}
+                      y2={node.right.y + 30} // child center
+                      stroke="#5a6ad6"
+                      strokeWidth="2"
+                    />
+                  )}
+              </g>
+            ))}
+          </svg>
 
-              {idx < linkedList.length - 1 && (
-                <div style={{ margin: "0 8px" }}>
-                  {isDoubly ? <ArrowBoth /> : <ArrowRight />}
-                </div>
-              )}
+          {treeNodes.map((node) => (
+            <div
+              key={`node-${node.id}`}
+              style={{
+                position: "absolute",
+                left: `${node.x}px`,
+                top: `${node.y}px`,
+                transform: "translate(-50%, 0)",
+                width: "60px",
+                height: "60px",
+                borderRadius: "50%",
+                backgroundColor:
+                  highlightId === node.id ? "#b39aff" : "#5a3fc0",
+                border: "1px solid #b39aff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "white",
+                fontWeight: "600",
+                fontSize: "16px",
+                boxShadow:
+                  highlightId === node.id
+                    ? "0 0 15px rgba(179,154,255,0.7)"
+                    : "0 2px 6px rgba(0,0,0,0.3)",
+                transition: "all 0.3s ease",
+              }}
+            >
+              {node.value}
             </div>
           ))}
         </div>
-      ) : isStack ? (
-        /* === STACK VISUALIZATION === */
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "260px",
-            backgroundColor: "#111830",
-            borderRadius: "8px",
-            padding: "10px 20px",
-            transition: "box-shadow 0.5s ease",
-            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-              width: "140px",
-              height: "100%",
-              border: "3px solid #3b3f63",
-              borderRadius: "12px",
-              background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
-              boxShadow: finished
-                ? "0 0 15px rgba(179,154,255,0.6) inset"
-                : "inset 0 0 10px #1c2240",
-              display: "flex",
-              flexDirection: "column-reverse",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              overflow: "hidden",
-              transition: "box-shadow 0.5s ease",
-            }}
-          >
-            {stack.map((val, idx) => (
-              <div
-                key={idx}
-                style={{
-                  width: "100px",
-                  height: "40px",
-                  marginBottom: "8px",
-                  backgroundColor: finished
-                    ? "#c5b3ff"
-                    : idx === stack.length - 1
-                    ? "#b39aff"
-                    : "#5a3fc0",
-                  border: "1px solid #b39aff",
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  color: "white",
-                  transform: finished ? "translateY(-6px)" : "translateY(0)",
-                  boxShadow: finished
-                    ? "0 0 15px rgba(179,154,255,0.7)"
-                    : "0 2px 6px rgba(0,0,0,0.3)",
-                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
-                }}
-              >
-                {val}
-              </div>
-            ))}
-          </div>
+      ) : isLinkedList ? ( /* === LINKED LIST VISUALIZATION === */
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "10px",
+          height: "260px",
+          backgroundColor: "#111830",
+          borderRadius: "8px",
+          padding: "10px 20px",
+          boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+          transition: "box-shadow 0.5s ease",
+        }}
+      >
+        {linkedList.map((val, idx) => (
+          <div key={idx} style={{ display: "flex", alignItems: "center" }}>
+            <div
+              style={{
+                minWidth: 70,
+                height: 46,
+                padding: "0 12px",
+                backgroundColor: finished
+                  ? "#c5b3ff"
+                  : idx === activeNode
+                  ? "#b39aff"
+                  : "#5a3fc0",
+                border: "1px solid #b39aff",
+                borderRadius: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 700,
+                color: "white",
+                boxShadow: finished
+                  ? "0 0 14px rgba(179,154,255,0.65)"
+                  : "0 2px 6px rgba(0,0,0,0.35)",
+                transition: "all 0.35s ease",
+              }}
+            >
+              {val}
+            </div>
 
-          <div
-            style={{
-              marginLeft: "35px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "flex-start",
-              height: "100%",
-              gap: "10px",
-            }}
-          >
-            <div
-              style={{
-                color: highlightAction === "push" ? "white" : "#666a80",
-                fontWeight: highlightAction === "push" ? "600" : "400",
-                fontSize: "15px",
-                transition: "color 0.3s ease",
-              }}
-            >
-              PUSH
-            </div>
-            <div
-              style={{
-                color: highlightAction === "pop" ? "white" : "#666a80",
-                fontWeight: highlightAction === "pop" ? "600" : "400",
-                fontSize: "15px",
-                transition: "color 0.3s ease",
-              }}
-            >
-              POP
-            </div>
-            <div
-              style={{
-                color: highlightAction === "eval" ? "white" : "#666a80",
-                fontWeight: highlightAction === "eval" ? "600" : "400",
-                fontSize: "15px",
-                transition: "color 0.3s ease",
-              }}
-            >
-              EVAL
-            </div>
-          </div>
-        </div>
-      ) : isQueue ? (
-        /* === QUEUE VISUALIZATION === */
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "260px",
-            backgroundColor: "#111830",
-            borderRadius: "8px",
-            padding: "10px 20px",
-            transition: "box-shadow 0.5s ease",
-            boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
-          }}
-        >
-          <div
-            style={{
-              position: "relative",
-              height: "100px",
-              width: "100%",
-              maxWidth: "500px",
-              border: "3px solid #3b3f63",
-              borderRadius: "12px",
-              background: "linear-gradient(90deg, #0d1228 0%, #0b0f20 100%)",
-              boxShadow: finished
-                ? "0 0 15px rgba(179,154,255,0.6) inset"
-                : "inset 0 0 10px #1c2240",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "flex-start",
-              overflow: "hidden",
-              padding: "0 10px",
-            }}
-          >
-            {stack.map((val, idx) => (
-              <div
-                key={idx}
-                style={{
-                  width: "60px",
-                  height: "40px",
-                  marginRight: "8px",
-                  backgroundColor: finished
-                    ? "#c5b3ff"
-                    : idx === 0
-                    ? "#b39aff"
-                    : "#5a3fc0",
-                  border: "1px solid #b39aff",
-                  borderRadius: "6px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  color: "white",
-                  transform: finished ? "translateX(6px)" : "translateX(0)",
-                  boxShadow: finished
-                    ? "0 0 15px rgba(179,154,255,0.7)"
-                    : "0 2px 6px rgba(0,0,0,0.3)",
-                  transition: "all 0.5s ease, transform 0.4s ease-in-out",
-                }}
-              >
-                {val}
+            {idx < linkedList.length - 1 && (
+              <div style={{ margin: "0 8px" }}>
+                {isDoubly ? <ArrowBoth /> : <ArrowRight />}
               </div>
-            ))}
+            )}
           </div>
-
-          <div
-            style={{
-              marginLeft: "35px",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "flex-start",
-              height: "100%",
-              gap: "10px",
-            }}
-          >
-            <div
-              style={{
-                color: highlightAction === "enqueue" ? "white" : "#666a80",
-                fontWeight: highlightAction === "enqueue" ? "600" : "400",
-                fontSize: "15px",
-                transition: "color 0.3s ease",
-              }}
-            >
-              ENQUEUE
-            </div>
-            <div
-              style={{
-                color: highlightAction === "dequeue" ? "white" : "#666a80",
-                fontWeight: highlightAction === "dequeue" ? "600" : "400",
-                fontSize: "15px",
-                transition: "color 0.3s ease",
-              }}
-            >
-              DEQUEUE
-            </div>
-          </div>
-        </div>
-      ) : (
-        // === DEFAULT BAR VISUALIZATION ===
+        ))}
+      </div>
+      ) : isStack ? ( /* === STACK VISUALIZATION === */
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "260px",
+          backgroundColor: "#111830",
+          borderRadius: "8px",
+          padding: "10px 20px",
+          transition: "box-shadow 0.5s ease",
+          boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+        }}
+      >
         <div
-          className={"visualization-bars" + (finished ? " sorted" : "")}
           style={{
+            position: "relative",
+            width: "140px",
+            height: "100%",
+            border: "3px solid #3b3f63",
+            borderRadius: "12px",
+            background: "linear-gradient(180deg, #0d1228 0%, #0b0f20 100%)",
+            boxShadow: finished
+              ? "0 0 15px rgba(179,154,255,0.6) inset"
+              : "inset 0 0 10px #1c2240",
             display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            height: "220px",
-            backgroundColor: "#111830",
-            borderRadius: "8px",
-            padding: "10px 6px",
+            flexDirection: "column-reverse",
+            alignItems: "center",
+            justifyContent: "flex-start",
             overflow: "hidden",
+            transition: "box-shadow 0.5s ease",
           }}
         >
-          {array.map((value, idx) => (
+          {stack.map((val, idx) => (
             <div
               key={idx}
               style={{
-                flex: 1,
-                margin: "0 1px",
-                borderRadius: "3px 3px 0 0",
-                height: `${value * 1.75}px`,
-                backgroundColor: active.includes(idx)
-                  ? "#ff4d6d"
-                  : finished
+                width: "100px",
+                height: "40px",
+                marginBottom: "8px",
+                backgroundColor: finished
+                  ? "#c5b3ff"
+                  : idx === stack.length - 1
                   ? "#b39aff"
                   : "#5a3fc0",
-                transition: "height 0.2s, background-color 0.4s",
+                border: "1px solid #b39aff",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "600",
+                color: "white",
+                transform: finished ? "translateY(-6px)" : "translateY(0)",
+                boxShadow: finished
+                  ? "0 0 15px rgba(179,154,255,0.7)"
+                  : "0 2px 6px rgba(0,0,0,0.3)",
+                transition: "all 0.5s ease, transform 0.4s ease-in-out",
               }}
-            />
+            >
+              {val}
+            </div>
           ))}
         </div>
+
+        <div
+          style={{
+            marginLeft: "35px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            height: "100%",
+            gap: "10px",
+          }}
+        >
+          <div
+            style={{
+              color: highlightAction === "push" ? "white" : "#666a80",
+              fontWeight: highlightAction === "push" ? "600" : "400",
+              fontSize: "15px",
+              transition: "color 0.3s ease",
+            }}
+          >
+            PUSH
+          </div>
+          <div
+            style={{
+              color: highlightAction === "pop" ? "white" : "#666a80",
+              fontWeight: highlightAction === "pop" ? "600" : "400",
+              fontSize: "15px",
+              transition: "color 0.3s ease",
+            }}
+          >
+            POP
+          </div>
+          <div
+            style={{
+              color: highlightAction === "eval" ? "white" : "#666a80",
+              fontWeight: highlightAction === "eval" ? "600" : "400",
+              fontSize: "15px",
+              transition: "color 0.3s ease",
+            }}
+          >
+            EVAL
+          </div>
+        </div>
+      </div>
+      ) : isQueue ? ( /* === QUEUE VISUALIZATION === */
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "260px",
+          backgroundColor: "#111830",
+          borderRadius: "8px",
+          padding: "10px 20px",
+          transition: "box-shadow 0.5s ease",
+          boxShadow: finished ? "0 0 20px 5px rgba(179,154,255,0.4)" : "none",
+        }}
+      >
+        <div
+          style={{
+            position: "relative",
+            height: "100px",
+            width: "100%",
+            maxWidth: "500px",
+            border: "3px solid #3b3f63",
+            borderRadius: "12px",
+            background: "linear-gradient(90deg, #0d1228 0%, #0b0f20 100%)",
+            boxShadow: finished
+              ? "0 0 15px rgba(179,154,255,0.6) inset"
+              : "inset 0 0 10px #1c2240",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "flex-start",
+            overflow: "hidden",
+            padding: "0 10px",
+          }}
+        >
+          {stack.map((val, idx) => (
+            <div
+              key={idx}
+              style={{
+                width: "60px",
+                height: "40px",
+                marginRight: "8px",
+                backgroundColor: finished
+                  ? "#c5b3ff"
+                  : idx === 0
+                  ? "#b39aff"
+                  : "#5a3fc0",
+                border: "1px solid #b39aff",
+                borderRadius: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "600",
+                color: "white",
+                transform: finished ? "translateX(6px)" : "translateX(0)",
+                boxShadow: finished
+                  ? "0 0 15px rgba(179,154,255,0.7)"
+                  : "0 2px 6px rgba(0,0,0,0.3)",
+                transition: "all 0.5s ease, transform 0.4s ease-in-out",
+              }}
+            >
+              {val}
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            marginLeft: "35px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "flex-start",
+            height: "100%",
+            gap: "10px",
+          }}
+        >
+          <div
+            style={{
+              color: highlightAction === "enqueue" ? "white" : "#666a80",
+              fontWeight: highlightAction === "enqueue" ? "600" : "400",
+              fontSize: "15px",
+              transition: "color 0.3s ease",
+            }}
+          >
+            ENQUEUE
+          </div>
+          <div
+            style={{
+              color: highlightAction === "dequeue" ? "white" : "#666a80",
+              fontWeight: highlightAction === "dequeue" ? "600" : "400",
+              fontSize: "15px",
+              transition: "color 0.3s ease",
+            }}
+          >
+            DEQUEUE
+          </div>
+        </div>
+      </div>
+      ) : ( // === DEFAULT BAR VISUALIZATION ===
+      <div
+        className={"visualization-bars" + (finished ? " sorted" : "")}
+        style={{
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          height: "220px",
+          backgroundColor: "#111830",
+          borderRadius: "8px",
+          padding: "10px 6px",
+          overflow: "hidden",
+        }}
+      >
+        {array.map((value, idx) => (
+          <div
+            key={idx}
+            style={{
+              flex: 1,
+              margin: "0 1px",
+              borderRadius: "3px 3px 0 0",
+              height: `${value * 1.75}px`,
+              backgroundColor: active.includes(idx)
+                ? "#ff4d6d"
+                : finished
+                ? "#b39aff"
+                : "#5a3fc0",
+              transition: "height 0.2s, background-color 0.4s",
+            }}
+          />
+        ))}
+      </div>
       )}
     </Card>
   );

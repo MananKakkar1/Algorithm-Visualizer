@@ -56,7 +56,7 @@ export default function App() {
               scrollbarColor: "#5a3fc0 #0b1220",
             }}
           >
-            <style jsx>{`
+            <style>{`
               .sidebar::-webkit-scrollbar {
                 width: 8px;
               }
