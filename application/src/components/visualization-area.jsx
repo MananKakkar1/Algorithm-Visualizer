@@ -313,6 +313,77 @@ function generateBinaryTreeSteps() {
   return { tree: root, steps };
 }
 
+function generateBinarySearchSteps(arr, target) {
+  // Assumes arr is sorted ascending.
+  const steps = [];
+  let low = 0;
+  let high = arr.length - 1;
+
+  while (low <= high) {
+    const mid = Math.floor(low + (high - low) / 2);
+
+    // Probe step (so you can highlight mid and optionally show window)
+    steps.push({
+      type: "probe",
+      low,
+      mid,
+      high,
+      midValue: arr[mid],
+      target,
+      compare: true, // so your existing "compare" path highlights mid
+      i: mid, // reuse your current highlighting logic (uses i/j)
+      j: null,
+    });
+
+    if (arr[mid] === target) {
+      steps.push({
+        type: "found",
+        low,
+        mid,
+        high,
+        midValue: arr[mid],
+        target,
+        compare: true,
+        i: mid,
+        j: null,
+      });
+      return steps;
+    }
+
+    if (arr[mid] < target) {
+      steps.push({
+        type: "shrink-left",
+        low,
+        mid,
+        high,
+        nextLow: mid + 1,
+        nextHigh: high,
+      });
+      low = mid + 1;
+    } else {
+      steps.push({
+        type: "shrink-right",
+        low,
+        mid,
+        high,
+        nextLow: low,
+        nextHigh: mid - 1,
+      });
+      high = mid - 1;
+    }
+  }
+
+  steps.push({
+    type: "not-found",
+    low,
+    high,
+    mid: null,
+    target,
+  });
+
+  return steps;
+}
+
 function generateBSTSteps() {
   const values = [50, 30, 70, 20, 40, 60, 80];
   const steps = [];
@@ -417,9 +488,21 @@ export default function VisualizationArea({
   }, [resetTick]);
 
   useEffect(() => {
+    const algo = (algorithm || "").toLowerCase();
+
     setStepIndex(0);
     setActive([]);
-    setArray(sourceArray.slice());
+
+    if (algo.includes("binary search")) {
+      // Use a sorted array for the bars when doing Binary Search
+      const temp = Array.from({ length: 20 }, (_, i) => i + (i+1)*5);
+      setArray(temp);
+      // Optional: also reflect it in sourceArray if you want everything else to "know" about it
+      // setSourceArray(temp);
+    } else {
+      setArray(sourceArray.slice());
+    }
+
     setStack([]);
     setLinkedList(sourceArray.slice(0, 6));
     setActiveNode(-1);
@@ -462,7 +545,10 @@ export default function VisualizationArea({
 
   const steps = useMemo(() => {
     const algo = (algorithm || "").toLowerCase();
-
+    console.log(algo);
+    let temp = [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+    ];
     if (algo.includes("singly")) return generateSinglyListSteps(linkedList);
     if (algo.includes("doubly")) return generateDoublyListSteps(linkedList);
     if (algo.includes("quick")) return generateQuickSteps(sourceArray);
@@ -478,6 +564,10 @@ export default function VisualizationArea({
     if (algo.includes("expression")) return generateExpressionEvalSteps();
     if (algo.includes("linear"))
       return generateLinearSearchSteps(sourceArray, sourceArray[6]);
+    if (algo.includes("binary search")) {
+      const temp = Array.from({ length: 20 }, (_, i) => i + 1);
+      return generateBinarySearchSteps(temp, 9);
+    }
 
     // Trees: use precomputed steps from the dedicated effect
     if (algo.includes("tree") || algo.includes("bst") || algo.includes("avl")) {
@@ -532,7 +622,10 @@ export default function VisualizationArea({
     ) {
       setHighlightId(s.highlightId);
     } else if (s.op === "compare" || s.compare) {
-      setActive([s.a ?? s.i, s.b ?? s.j].filter(Boolean));
+      const idxs = [s.a ?? s.i, s.b ?? s.j].filter(
+        (v) => v !== undefined && v !== null
+      );
+      setActive(idxs);
     } else if (s.op === "swap" || s.swapped) {
       setArray((prev) => {
         const copy = prev.slice();

@@ -333,6 +333,17 @@ def insert(root, key):
             if item == x:
                 return True
         return False`,
+    "Binary Search": `def binary_search(arr, x):
+        low, high = 0, len(arr) - 1
+        while low <= high:
+            mid = low + (high - low) / 2
+            if arr[mid] == x:
+                return True
+            elif arr[mid] > x:
+                low = mid + 1
+            else:
+                high = mid - 1
+        return False`
 };
 
 /** ------------------------------------------------------------------
@@ -435,6 +446,11 @@ const algoInfo = {
     space: "O(1)",
     desc: "A search algorithm that iterates through the entire array in the worst case to search for one element.",
   },
+  "Binary Search": {
+    time: "O(logn)",
+    space: "O(1)",
+    desc: "A search algorithm that keeps splitting the array in half until it finds the element."
+  }
 };
 
 /** ------------------------------------------------------------------

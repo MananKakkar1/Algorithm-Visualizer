@@ -21,7 +21,6 @@ const algorithms = [
   },
   { name: "Searching", items: ["Linear Search", "Binary Search"] },
   { name: "Recursion", items: ["Factorial", "Fibonacci", "Tower of Hanoi"] },
-  { name: "Dynamic Programming", items: ["Knapsack", "LCS", "Coin Change"] },
   { name: "Graph Traversals", items: ["BFS", "DFS", "Dijkstra"] },
 ];
 
